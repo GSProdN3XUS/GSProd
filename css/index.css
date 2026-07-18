@@ -1,0 +1,471 @@
+/* =========================================================
+   ESTILOS GERAIS E LAYOUT
+   ========================================================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    background-color: #02234d; 
+    color: #ffffff;
+}
+
+.container-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+/* =========================================================
+   TOPO SUPERIOR (AZUL ESCURO)
+   ========================================================= */
+.topo-superior {
+    background-color: #00122a;
+    color: #ffffff;
+    padding: 12px 0;
+    font-size: 13px;
+    border-bottom: 1px solid #02234d;
+}
+
+.icon-destaque {
+    color: #38bdf8;
+    margin-right: 5px;
+}
+
+.botoes-usuario-topo {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.botoes-usuario-topo span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.botoes-usuario-topo a {
+    color: #ffffff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: bold;
+    transition: color 0.2s;
+}
+
+.botoes-usuario-topo a:hover {
+    color: #38bdf8;
+}
+
+/* =========================================================
+   HEADER PRINCIPAL (Forçado para Azul Escuro com elementos em harmonia)
+   ========================================================= */
+.header-principal {
+    background-color: #00122a;
+    padding: 20px 0;
+    border-bottom: 1px solid #02234d;
+}
+
+.header-conteudo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-site {
+    max-height: 60px;
+    width: auto;
+}
+
+.busca-area {
+    display: flex;
+    width: 50%;
+    max-width: 500px;
+}
+
+.busca-area input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #02234d;
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    outline: none;
+    background-color: #ffffff;
+    color: #0f172a;
+}
+
+.busca-area input:focus {
+    border-color: #38bdf8;
+}
+
+.btn-busca {
+    padding: 0 20px;
+    background-color: #02234d;
+    color: #ffffff;
+    border: 2px solid #02234d;
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+}
+
+.btn-busca:hover {
+    background-color: #38bdf8;
+    color: #00122a;
+    border-color: #38bdf8;
+}
+
+.atendimento-whats {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.whats-large {
+    font-size: 38px;
+    color: #22c55e;
+}
+
+.atendimento-whats div {
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+    color: #ffffff;
+}
+
+.atendimento-whats strong {
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.fale-conosco {
+    color: #22c55e;
+    font-weight: bold;
+}
+
+/* =========================================================
+   NAVEGAÇÃO E MENU (AZUL ESCURO)
+   ========================================================= */
+.nav-principal {
+    background-color: #00122a;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.menu-todas-categorias {
+    position: relative;
+    background-color: #02234d;
+    color: #ffffff;
+    padding: 15px 20px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.titulo-hamburger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.titulo-hamburger span {
+    font-size: 10px;
+}
+
+.dropdown-categorias {
+    display: none; 
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    list-style: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 100;
+}
+
+.dropdown-categorias.active-dropdown {
+    display: block;
+}
+
+.dropdown-categorias li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    color: #0f172a;
+    border-bottom: 1px solid #f1f5f9;
+    font-weight: normal;
+    transition: background 0.2s, color 0.2s;
+}
+
+.dropdown-categorias li:hover {
+    background-color: #00122a;
+    color: #ffffff;
+}
+
+.arrow-category {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.links-menu {
+    display: flex;
+    list-style: none;
+    gap: 5px;
+}
+
+.links-menu li a {
+    display: block;
+    padding: 20px 15px;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.links-menu li a:hover, 
+.links-menu li a.active {
+    background-color: #02234d;
+    color: #38bdf8;
+}
+
+/* =========================================================
+   VITRINE DE PRODUTOS (TAMANHO AUMENTADO)
+   ========================================================= */
+.layout-principal {
+    padding: 40px 0;
+}
+
+.vitrine-produtos {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 20px; /* Aumentamos um pouco o espaço entre as colunas */
+    width: 100%;
+    max-width: 1200px; /* Expandido de 1050px para 1200px para dar mais espaço */
+    margin: 0 auto; 
+    justify-items: center; 
+}
+
+.produto-card {
+    background: #00122a; 
+    border-radius: 8px;
+    padding: 18px; /* Mais espaço interno no cartão */
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    border: 1px solid #02234d;
+    width: 100%;
+    max-width: 280px; /* Aumentado de 245px para 280px! */
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.produto-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+}
+
+.produto-imagem-baia {
+    width: 100%;
+    height: 190px; /* Aumentado bastante: de 130px para 190px! */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+    overflow: hidden;
+    border-radius: 6px;
+    background-color: #ffffff; 
+}
+
+.produto-imagem-baia img {
+    max-width: 95%;
+    max-height: 95%;
+    object-fit: contain;
+}
+
+.produto-titulo {
+    font-size: 15px; /* Fonte aumentada (era 13px) */
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 8px;
+    line-height: 1.3;
+    height: 40px; /* Altura ajustada para 2 linhas de texto maior */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.produto-preco {
+    font-size: 18px; /* Preço de destaque (era 15px) */
+    font-weight: bold;
+    color: #38bdf8;
+    margin-bottom: 12px;
+}
+
+/* Estilização dos botões (Verde e Amarelo) */
+.btn-comprar {
+    width: 100%;
+    padding: 10px; /* Botões um pouco mais altos (era 8px) */
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 12px; /* Fonte levemente maior (era 11px) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.btn-comprar:active {
+    transform: scale(0.98);
+}
+
+.btn-verde {
+    background-color: #22c55e !important; 
+    color: #ffffff !important;
+}
+
+.btn-verde:hover {
+    background-color: #16a34a !important;
+}
+
+.btn-amarelo {
+    background-color: #eab308 !important; 
+    color: #00122a !important;
+}
+
+.btn-amarelo:hover {
+    background-color: #ca8a04 !important;
+}
+
+/* =========================================================
+   RODAPÉ DE BENEFÍCIOS
+   ========================================================= */
+.rodape-beneficios {
+    background-color: #00122a;
+    border-top: 1px solid #02234d;
+    padding: 30px 0;
+    margin-top: auto;
+}
+
+.beneficios-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 20px;
+}
+
+.beneficio-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: #cbd5e1;
+    min-width: 200px;
+}
+
+.beneficio-icon {
+    font-size: 28px;
+    color: #38bdf8;
+}
+
+.beneficio-item strong {
+    color: #ffffff;
+    font-size: 13px;
+}
+
+/* =========================================================
+   ESTILOS DO MODAL CENTRALIZADO (MINHA CONTA)
+   ========================================================= */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-box {
+    background: #00122a;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 320px;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    text-align: center;
+    border: 1px solid #02234d;
+}
+
+.modal-fechar {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #94a3b8;
+}
+
+.modal-fechar:hover {
+    color: #ffffff;
+}
+
+.modal-titulo {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #ffffff;
+}
+
+.modal-opcoes {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.opcao-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    background: #02234d;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.opcao-btn:hover {
+    background: #1e293b;
+}
+
+.btn-sair {
+    background: #7f1d1d;
+    color: #fca5a5;
+}
+
+.btn-sair:hover {
+    background: #991b1b;
+}

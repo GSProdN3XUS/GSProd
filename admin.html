@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S produtos Ortopedicos - Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+</head>
+
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <span class="has-text-warning font-weight-bold">S</span>
+                <span class="has-text-white">Ortopédicos</span>
+            </div>
+
+            <p class="menu-label px-4 mt-5">Navegação</p>
+            <ul class="menu-list px-2" id="sidebar-menu">
+                <li>
+                    <a href="#" data-target="aba-dashboard" class="is-active">
+                        <span class="icon mr-2"><i class="fas fa-chart-line"></i></span> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-target="aba-produtos">
+                        <span class="icon mr-2"><i class="fas fa-box-open"></i></span> Produtos
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-target="aba-vendas">
+                        <span class="icon mr-2"><i class="fas fa-shopping-bag"></i></span> Vendas
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-target="aba-cupons">
+                        <span class="icon mr-2"><i class="fas fa-tags"></i></span> Cupons
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-target="aba-estoque">
+                        <span class="icon mr-2"><i class="fas fa-boxes"></i></span> Estoque
+                    </a>
+                </li>
+            </ul>
+
+            <p class="menu-label px-4 mt-5">Configurações</p>
+            <ul class="menu-list px-2">
+                <li>
+                    <a href="#">
+                        <span class="icon mr-2"><i class="fas fa-cog"></i></span> Ajustes
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="btn-logout" class="has-text-danger">
+                        <span class="icon mr-2"><i class="fas fa-sign-out-alt"></i></span> Sair
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <main class="main-content-wrapper flex-grow-1">
+            <header class="topbar-dashboard mb-5">
+                <h1 class="title is-3 has-text-warning m-0">S produtos Ortopedicos</h1>
+                <div class="topbar-end">
+                    <span class="tag is-success is-light">
+                        <i class="fas fa-database mr-1"></i> Firebase Ativo
+                    </span>
+                </div>
+            </header>
+
+            <div class="container is-fluid p-0">
+                
+                <div id="aba-dashboard" class="aba-conteudo">
+                    <div class="columns is-multiline mb-5">
+                        <div class="column is-4">
+                            <div class="card card-receita">
+                                <div class="card-content">
+                                    <div class="level is-mobile mb-2">
+                                        <div class="level-left">
+                                            <div>
+                                                <p class="heading card-subtitle">Receitas do Mês</p>
+                                                <p class="title is-size-3 has-text-white" id="txt-receitas">R$ 0,00</p>
+                                            </div>
+                                        </div>
+                                        <div class="level-right">
+                                            <span class="icon is-large icon-box-green"><i class="fas fa-wallet fa-2x"></i></span>
+                                        </div>
+                                    </div>
+                                    <p class="is-size-7 has-text-grey-light">
+                                        <span class="has-text-success mr-1"><i class="fas fa-arrow-up"></i> +12%</span> em relação ao mês passado
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="column is-4">
+                            <div class="card card-vendas">
+                                <div class="card-content">
+                                    <div class="level is-mobile mb-2">
+                                        <div class="level-left">
+                                            <div>
+                                                <p class="heading card-subtitle">Vendas no Mês</p>
+                                                <p class="title is-size-3 has-text-white" id="txt-vendas">0</p>
+                                            </div>
+                                        </div>
+                                        <div class="level-right">
+                                            <span class="icon is-large icon-box-blue"><i class="fas fa-shopping-cart fa-2x"></i></span>
+                                        </div>
+                                    </div>
+                                    <p class="is-size-7 has-text-grey-light">
+                                        <span class="has-text-info mr-1"><i class="fas fa-arrow-up"></i> +8% (qtd)</span> do que no mês anterior
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="column is-4">
+                            <div class="card card-avisos">
+                                <div class="card-content">
+                                    <div class="level is-mobile">
+                                        <div class="level-left">
+                                            <div>
+                                                <p class="heading card-subtitle-dark">Avisos e Alertas</p>
+                                                <div class="notification-list" id="lista-avisos">
+                                                    <p class="item-aviso danger"><i class="fas fa-exclamation-triangle"></i> Estoque baixo detectado</p>
+                                                    <p class="item-aviso warning"><i class="fas fa-clock"></i> Cupom próximo do vencimento</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="level-right">
+                                            <span class="icon is-large icon-box-dark"><i class="fas fa-bell fa-2x"></i></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="columns is-multiline">
+                        <div class="column is-7">
+                            <div class="box ranking-container">
+                                <h4 class="title is-5 has-text-white mb-4">
+                                    <i class="fas fa-trophy has-text-warning mr-2"></i> Top 3 Produtos Mais Vendidos
+                                </h4>
+                                <div class="ranking-list">
+                                    <div class="ranking-item">
+                                        <div class="ranking-position pos-1"><i class="fas fa-medal"></i></div>
+                                        <div class="ranking-details">
+                                            <p class="has-text-white font-weight-bold">Tipoia Estofada Imobilizadora</p>
+                                            <small class="has-text-grey-light">Cód: ORTO-502</small>
+                                        </div>
+                                        <div class="ranking-qty has-text-warning"><strong>142</strong> <small>vendas</small></div>
+                                    </div>
+                                    <div class="ranking-item">
+                                        <div class="ranking-position pos-2"><i class="fas fa-medal"></i></div>
+                                        <div class="ranking-details">
+                                            <p class="has-text-white font-weight-bold">Joelheira Articulada Neoprene</p>
+                                            <small class="has-text-grey-light">Cód: ORTO-110</small>
+                                        </div>
+                                        <div class="ranking-qty has-text-info"><strong>98</strong> <small>vendas</small></div>
+                                    </div>
+                                    <div class="ranking-item">
+                                        <div class="ranking-position pos-3"><i class="fas fa-medal"></i></div>
+                                        <div class="ranking-details">
+                                            <p class="has-text-white font-weight-bold">Palmilha Ortopédica em Gel</p>
+                                            <small class="has-text-grey-light">Cód: ORTO-085</small>
+                                        </div>
+                                        <div class="ranking-qty has-text-grey-light"><strong>74</strong> <small>vendas</small></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="column is-5">
+                            <div class="box acessos-container">
+                                <h4 class="title is-5 has-text-white mb-4"><i class="fas fa-users-viewfinder has-text-info mr-2"></i> Tráfego da Vitrine</h4>
+                                <div class="has-text-centered my-4">
+                                    <p class="heading text-muted">Total de Acessos (Mês Atual)</p>
+                                    <p class="title is-1 has-text-white">3.450</p>
+                                </div>
+                                <div class="acessos-metrics">
+                                    <div class="mb-2">
+                                        <div class="is-flex is-justify-content-space-between is-size-7 mb-1">
+                                            <span>Acessos por Celular</span><span class="has-text-info">75%</span>
+                                        </div>
+                                        <progress class="progress is-info is-small" value="75" max="100">75%</progress>
+                                    </div>
+                                    <div>
+                                        <div class="is-flex is-justify-content-space-between is-size-7 mb-1">
+                                            <span>Acessos por Computador</span><span class="has-text-warning">25%</span>
+                                        </div>
+                                        <progress class="progress is-warning is-small" value="25" max="100">25%</progress>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="aba-produtos" class="aba-conteudo is-hidden">
+                    <div class="columns is-centered">
+                        <div class="column is-12">
+                            <div class="box form-container">
+                                <h3 class="title is-4 has-text-white mb-5">
+                                    <i class="fas fa-box-open has-text-warning mr-2"></i> Cadastrar Novo Produto
+                                </h3>
+                                <form id="form-cadastro-produto">
+                                    <div class="columns is-multiline">
+                                        <div class="column is-4">
+                                            <div class="field">
+                                                <label class="label text-muted">Código do Produto</label>
+                                                <div class="control has-icons-left">
+                                                    <input class="input custom-input" type="text" id="prod-codigo" placeholder="EX: ORTO-502" required />
+                                                    <span class="icon is-small is-left"><i class="fas fa-barcode"></i></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="column is-8">
+                                            <div class="field">
+                                                <label class="label text-muted">Nome do Produto</label>
+                                                <div class="control has-icons-left">
+                                                    <input class="input custom-input" type="text" id="prod-nome" placeholder="Ex: Tipoia Estofada Imobilizadora" required />
+                                                    <span class="icon is-small is-left"><i class="fas fa-tag"></i></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="column is-12">
+                                            <div class="field">
+                                                <label class="label text-muted">Valor Unitário (R$)</label>
+                                                <div class="control has-icons-left">
+                                                    <input class="input custom-input" type="number" step="0.01" id="prod-valor" placeholder="0.00" required />
+                                                    <span class="icon is-small is-left"><i class="fas fa-dollar-sign"></i></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="column is-12">
+                                            <div class="size-selection-area">
+                                                <div class="level is-mobile mb-3">
+                                                    <div class="level-left">
+                                                        <label class="label text-muted mb-0">Grade de Tamanhos e Estoque</label>
+                                                    </div>
+                                                    <div class="level-right">
+                                                        <label class="checkbox has-text-warning font-weight-bold">
+                                                            <input type="checkbox" id="prod-tamanho-unico" class="mr-2" /> Tamanho Único
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="grade-quantidades-container">
+                                                    <div class="field is-horizontal alignment-qty is-hidden" id="box-qtd-unica">
+                                                        <div class="field-label is-normal text-left-mobile">
+                                                            <label class="label text-muted">Qtd Total:</label>
+                                                        </div>
+                                                        <div class="field-body">
+                                                            <div class="field">
+                                                                <div class="control">
+                                                                    <input class="input custom-input input-qtd-grade" type="number" min="0" id="prod-qtd-unica" placeholder="0" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="grades-individuais" class="columns is-mobile is-multiline g-tamanhos-linha m-0">
+                                                        <div class="column is-narrow size-block-item">
+                                                            <label class="size-btn"><input type="checkbox" name="tamanhos" value="PP" data-target-input="qtd-pp" /><span>PP</span></label>
+                                                            <input class="input custom-input input-qtd-grade mt-2" type="number" min="0" id="qtd-pp" placeholder="0" disabled />
+                                                        </div>
+                                                        <div class="column is-narrow size-block-item">
+                                                            <label class="size-btn"><input type="checkbox" name="tamanhos" value="P" data-target-input="qtd-p" /><span>P</span></label>
+                                                            <input class="input custom-input input-qtd-grade mt-2" type="number" min="0" id="qtd-p" placeholder="0" disabled />
+                                                        </div>
+                                                        <div class="column is-narrow size-block-item">
+                                                            <label class="size-btn"><input type="checkbox" name="tamanhos" value="M" data-target-input="qtd-m" /><span>M</span></label>
+                                                            <input class="input custom-input input-qtd-grade mt-2" type="number" min="0" id="qtd-m" placeholder="0" disabled />
+                                                        </div>
+                                                        <div class="column is-narrow size-block-item">
+                                                            <label class="size-btn"><input type="checkbox" name="tamanhos" value="G" data-target-input="qtd-g" /><span>G</span></label>
+                                                            <input class="input custom-input input-qtd-grade mt-2" type="number" min="0" id="qtd-g" placeholder="0" disabled />
+                                                        </div>
+                                                        <div class="column is-narrow size-block-item">
+                                                            <label class="size-btn"><input type="checkbox" name="tamanhos" value="GG" data-target-input="qtd-gg" /><span>GG</span></label>
+                                                            <input class="input custom-input input-qtd-grade mt-2" type="number" min="0" id="qtd-gg" placeholder="0" disabled />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="column is-12">
+                                            <div class="field">
+                                                <label class="label text-muted">Imagem do Produto</label>
+                                                <div class="file has-name is-fullwidth is-info">
+                                                    <label class="file-label">
+                                                        <input class="file-input" type="file" id="prod-imagem" accept="image/*" />
+                                                        <span class="file-cta">
+                                                            <span class="file-icon"><i class="fas fa-upload"></i></span>
+                                                            <span class="file-label">Escolher Imagem...</span>
+                                                        </span>
+                                                        <span class="file-name" id="nome-arquivo-upload">Nenhum arquivo selecionado</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div id="preview-box" class="has-text-centered mt-3" style="display: none">
+                                                <img id="img-preview" src="" alt="Preview" class="uploaded-preview" />
+                                            </div>
+                                        </div>
+
+                                        <div class="column is-12 mt-4">
+                                            <button type="submit" class="button is-warning is-fullwidth has-text-weight-bold btn-submit">
+                                                <i class="fas fa-check-circle mr-2"></i> Cadastrar no Sistema
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="aba-vendas" class="aba-conteudo is-hidden">
+                    <div class="box form-container">
+                        <h3 class="title is-4 has-text-white mb-5">
+                            <i class="fas fa-shopping-bag has-text-warning mr-2"></i> Registrar Nova Venda
+                        </h3>
+                        <form id="form-registrar-venda">
+                            <div class="columns is-multiline">
+                                <div class="column is-6">
+                                    <div class="field">
+                                        <label class="label text-muted">Selecione o Produto</label>
+                                        <div class="control has-icons-left">
+                                            <div class="select is-fullwidth custom-select-wrapper">
+                                                <select id="venda-produto" required>
+                                                    <option value="" disabled selected>Carregando produtos...</option>
+                                                </select>
+                                            </div>
+                                            <span class="icon is-small is-left"><i class="fas fa-box"></i></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="column is-3">
+                                    <div class="field">
+                                        <label class="label text-muted">Tamanho</label>
+                                        <div class="control has-icons-left">
+                                            <div class="select is-fullwidth custom-select-wrapper">
+                                                <select id="venda-tamanho" required disabled>
+                                                    <option value="" disabled selected>Selecione o produto...</option>
+                                                </select>
+                                            </div>
+                                            <span class="icon is-small is-left"><i class="fas fa-ruler"></i></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="column is-3">
+                                    <div class="field">
+                                        <label class="label text-muted">Quantidade</label>
+                                        <div class="control has-icons-left">
+                                            <input class="input custom-input" type="number" id="venda-quantidade" min="1" value="1" required disabled />
+                                            <span class="icon is-small is-left"><i class="fas fa-boxes"></i></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="column is-12 mt-4">
+                                    <button type="submit" class="button is-warning is-fullwidth has-text-weight-bold btn-submit">
+                                        <i class="fas fa-check-circle mr-2"></i> Concluir Venda e Baixar Estoque
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div class="table-container mt-6">
+                            <h4 class="title is-5 has-text-white mb-3">
+                                <i class="fas fa-history has-text-warning mr-2"></i> Histórico de Vendas Recentes
+                            </h4>
+                            <table class="table is-fullwidth custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Identificador</th>
+                                        <th>Produto</th>
+                                        <th>Tam.</th>
+                                        <th>Qtd.</th>
+                                        <th>Valor Total</th>
+                                        <th class="has-text-centered">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-historico-vendas-corpo">
+                                    <tr>
+                                        <td colspan="6" class="has-text-centered has-text-grey">Nenhuma venda registrada ainda.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="aba-cupons" class="aba-conteudo is-hidden">
+                    <div class="box form-container">
+                        <div class="level mb-5">
+                            <div class="level-left">
+                                <h3 class="title is-4 has-text-white m-0">
+                                    <i class="fas fa-tags has-text-warning mr-2"></i> Cupons de Desconto
+                                </h3>
+                            </div>
+                            <div class="level-right">
+                                <button class="button is-warning font-weight-bold" id="btn-abrir-modal-cupom">
+                                    <span class="icon"><i class="fas fa-plus"></i></span>
+                                    <span>Novo Cupom</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="columns is-multiline" id="grid-cupons-container"></div>
+                    </div>
+                </div>
+
+                <div id="aba-estoque" class="aba-conteudo is-hidden">
+                    <div class="box form-container">
+                        <div class="level mb-5">
+                            <div class="level-left">
+                                <h3 class="title is-4 has-text-white m-0">
+                                    <i class="fas fa-boxes has-text-warning mr-2"></i> Controle de Estoque Geral
+                                </h3>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="table is-fullwidth custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Produto</th>
+                                        <th>Estoque Atual (Grade)</th>
+                                        <th class="has-text-centered" style="width: 120px">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-estoque-corpo"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div> </main>
+    </div> <div class="modal" id="modal-cupom">
+        <div class="modal-background"></div>
+        <div class="modal-card custom-modal-card">
+            <header class="modal-card-head custom-modal-header">
+                <p class="modal-card-title text-white font-weight-bold is-size-5">Novo Cupom de Desconto</p>
+            </header>
+            <form id="form-cupom">
+                <section class="modal-card-body custom-modal-body">
+                    <div class="field mb-4">
+                        <label class="label text-muted">Código do Cupom</label>
+                        <div class="control has-icons-left">
+                            <input class="input custom-input" type="text" id="cupom-nome" placeholder="Ex: ORTO10" required style="text-transform: uppercase" />
+                            <span class="icon is-small is-left"><i class="fas fa-font"></i></span>
+                        </div>
+                    </div>
+                    <div class="field mb-4">
+                        <label class="label text-muted">Número Máximo de Usos</label>
+                        <div class="control has-icons-left">
+                            <input class="input custom-input" type="number" min="1" id="cupom-usos" placeholder="Ex: 50" required />
+                            <span class="icon is-small is-left"><i class="fas fa-users"></i></span>
+                        </div>
+                    </div>
+                    <div class="field mb-2">
+                        <label class="label text-muted">Data Limite de Validade</label>
+                        <div class="control has-icons-left">
+                            <input class="input custom-input" type="date" id="cupom-data" required />
+                            <span class="icon is-small is-left"><i class="fas fa-calendar-alt"></i></span>
+                        </div>
+                    </div>
+                </section>
+                <footer class="modal-card-foot custom-modal-footer">
+                    <button type="submit" class="button is-warning has-text-weight-bold">Salvar Cupom</button>
+                    <button type="button" class="button is-dark" id="btn-fechar-modal-cupom-btn">Cancelar</button>
+                </footer>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script de Alertas -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Biblioteca de Geração de PDF ADICIONADA AQUI -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Importação do gerador de PDF seguro -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Seu script principal -->
+    <script type="module" src="js/admin.js"></script>
+</body>
+</html>

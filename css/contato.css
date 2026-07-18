@@ -1,0 +1,185 @@
+/* Container Principal */
+.container-contato {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    font-family: Arial, sans-serif;
+}
+.titulo-contato { 
+    text-align: center; 
+    font-size: 2.5rem; 
+    color: #1e293b; 
+    margin-bottom: 10px; 
+}
+.subtitulo-contato { 
+    text-align: center; 
+    color: #64748b; 
+    margin-bottom: 40px; 
+}
+
+/* CARDS DAS REDES (Iniciam em Cinza) */
+.cards-redes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 50px;
+}
+
+.card-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    border-radius: 12px;
+    text-decoration: none;
+    background-color: #e2e8f0; /* Fundo Cinza Claro */
+    color: #475569; /* Texto Cinza Escuro */
+    transition: all 0.4s ease;
+}
+
+.card-link i {
+    font-size: 3.5rem;
+    margin-bottom: 15px;
+    color: #64748b; /* Ícone Cinza */
+    transition: all 0.4s ease;
+}
+
+.card-link h2 { margin: 0 0 10px 0; font-size: 1.5rem; }
+.card-link p { margin: 0; font-size: 0.9rem; opacity: 0.9; text-align: center; }
+
+/* EFEITOS DE HOVER (Revela a Cor Original) */
+.card-link:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+/* Hover WhatsApp: Verde */
+.card-whatsapp:hover { 
+    background: linear-gradient(135deg, #25D366, #128C7E); 
+    color: #fff; 
+}
+.card-whatsapp:hover i { color: #fff; }
+
+/* Hover Instagram: Gradiente */
+.card-instagram:hover { 
+    background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); 
+    color: #fff; 
+}
+.card-instagram:hover i { color: #fff; }
+
+/* Hover Google: Branco com Ícone Azul e Texto Escuro */
+.card-google:hover { 
+    background: #ffffff; 
+    color: #1e293b; 
+    border: 1px solid #e2e8f0; 
+}
+.card-google:hover i { color: #4285F4; }
+
+/* SEÇÃO DE FEEDBACK E MAPA */
+.feedback-mapa-container { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 30px; 
+}
+@media (max-width: 768px) { 
+    .feedback-mapa-container { grid-template-columns: 1fr; } 
+}
+.box-feedback, .box-mapa { 
+    background: #f8fafc; 
+    padding: 30px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+}
+.box-feedback h2, .box-mapa h2 { 
+    margin-top: 0; 
+    color: #334155; 
+    margin-bottom: 20px; 
+}
+
+/* Estilo do Formulário */
+#form-feedback label { 
+    display: block; 
+    margin-bottom: 8px; 
+    color: #475569; 
+    font-weight: bold; 
+}
+#form-feedback input[type="text"], 
+#form-feedback textarea { 
+    width: 100%; 
+    padding: 12px; 
+    margin-bottom: 20px; 
+    border: 1px solid #cbd5e1; 
+    border-radius: 6px; 
+    font-family: inherit; 
+}
+.btn-enviar { 
+    background-color: #eab308; 
+    color: #fff; 
+    border: none; 
+    padding: 15px 20px; 
+    width: 100%; 
+    font-size: 1.1rem; 
+    font-weight: bold; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    transition: background 0.3s; 
+}
+.btn-enviar:hover { background-color: #ca8a04; }
+
+/* Estilo das Estrelas Clicáveis */
+.estrelas { 
+    display: flex; 
+    gap: 5px; 
+    margin-bottom: 20px; 
+    font-size: 2rem; 
+    color: #cbd5e1; 
+    cursor: pointer; 
+}
+.estrelas i.ativa { 
+    color: #eab308; 
+    font-weight: 900; 
+}
+
+/* MURAL DE FEEDBACKS DO BANCO DE DADOS */
+.mural-feedbacks { 
+    margin-top: 60px; 
+    padding-top: 40px; 
+    border-top: 1px solid #e2e8f0; 
+}
+.titulo-mural { 
+    text-align: center; 
+    color: #1e293b; 
+    margin-bottom: 30px; 
+}
+.grid-feedbacks { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+    gap: 20px; 
+}
+.card-depoimento { 
+    background: #fff; 
+    padding: 20px; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
+    border-left: 4px solid #eab308; 
+}
+.card-depoimento .nome-cliente { 
+    font-weight: bold; 
+    color: #334155; 
+    margin-bottom: 5px; 
+    font-size: 1.1rem; 
+    display: flex; 
+    align-items: center; 
+}
+.card-depoimento .estrelas-dadas { 
+    color: #eab308; 
+    margin-bottom: 15px; 
+    font-size: 1rem; 
+}
+.card-depoimento .mensagem-cliente { 
+    color: #64748b; 
+    font-size: 0.95rem; 
+    line-height: 1.5; 
+    font-style: italic; 
+}

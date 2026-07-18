@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S Produtos Ortopédicos - Carrinho</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link rel="stylesheet" href="css/carrinho_geral.css">
+    <link rel="stylesheet" href="css/carrinho.css">
+</head>
+<body>
+
+    <div class="topo-superior">
+        <div class="container-flex">
+            <div><i class="fa-solid fa-truck-fast icon-destaque"></i> Enviamos para <strong>Fortaleza e região</strong></div>
+            
+            <div class="botoes-usuario-topo">
+                <span><i class="fa-brands fa-whatsapp"></i> (85) 99815-4761</span>
+                
+                <a href="login.html" id="btn-usuario-topo">
+                    <i class="fa-regular fa-user"></i> Minha conta
+                </a>
+                
+                <a href="carrinho.html" id="carrinho-topo">
+                    <i class="fa-solid fa-cart-shopping"></i> Carrinho (0)
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <header class="header-principal">
+        <div class="container-flex header-conteudo">
+            <div class="logo-area">
+                <img src="img/logo.png" alt="S Produtos Ortopédicos" class="logo-site">
+            </div>
+            
+            <div class="busca-area">
+                <input type="text" placeholder="O que você está procurando?">
+                <button class="btn-busca"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+
+            <div class="atendimento-whats">
+                <i class="fa-brands fa-whatsapp whats-large"></i>
+                <div>
+                    <small>Atendimento via WhatsApp</small>
+                    <strong>(85) 99815-4761</strong>
+                    <span class="fale-conosco">Fale conosco!</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav-principal">
+        <div class="container-flex" style="justify-content: flex-end;">
+            <ul class="links-menu" style="margin-right: auto;">
+                <li><a href="index.html"><i class="fa-solid fa-house"></i> INÍCIO</a></li>
+                <li><a href="produtos.html"><i class="fa-solid fa-box-open"></i> PRODUTOS</a></li>
+                <li><a href="#"><i class="fa-solid fa-percent"></i> OFERTAS</a></li>
+                <li><a href="#"><i class="fa-regular fa-star"></i> LANÇAMENTOS</a></li>
+                <li><a href="#"><i class="fa-solid fa-users"></i> SOBRE NÓS</a></li>
+                <li><a href="#"><i class="fa-regular fa-envelope"></i> CONTATO</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="layout-carrinho container-flex">
+        <section class="secao-carrinho-conteudo">
+            <h1><i class="fa-solid fa-cart-shopping"></i> Meu Carrinho</h1>
+            
+            <div id="lista-produtos-carrinho" class="lista-produtos-carrinho">
+                <p class="carrinho-vazio" style="display: none;">O seu carrinho está vazio.</p>
+            </div>
+        </section>
+
+        <section class="secao-resumo-pedido">
+            <div class="resumo-card">
+                <h2>Resumo do Pedido</h2>
+                
+                <div class="cupom-area">
+                    <label for="input-cupom">Cupom de Desconto</label>
+                    <div class="cupom-input-grupo">
+                        <input type="text" id="input-cupom" placeholder="Digite o código">
+                        <button id="btn-aplicar-cupom" onclick="window.aplicarCupom()">Aplicar</button>
+                    </div>
+                </div>
+
+                <div class="cupom-area" style="background-color: #011631; border-color: #02234d;">
+                    <label for="input-cep" style="color: #eab308;"><i class="fa-solid fa-location-dot"></i> Calcular Frete (Fortaleza e Região)</label>
+                    <div class="cupom-input-grupo">
+                        <input type="text" id="input-cep" placeholder="00000-000" maxlength="9">
+                        <button id="btn-calcular-frete" onclick="window.calcularFretePorCep()">Calcular</button>
+                    </div>
+                </div>
+                <small id="erro-cep" style="color: #fca5a5; font-size: 11px; display: none; margin-bottom: 10px;"></small>
+
+                <div class="resumo-linha">
+                    <span>Subtotal</span>
+                    <strong id="subtotal-carrinho">R$ 0,00</strong>
+                </div>
+
+                <div class="resumo-linha" id="linha-desconto" style="display: none; color: #22c55e;">
+                    <span>Desconto</span>
+                    <strong id="valor-desconto">-R$ 0,00</strong>
+                </div>
+
+                <div class="resumo-linha" id="linha-entrega" style="display: none;">
+                    <span>Frete</span>
+                    <strong id="valor-entrega">R$ 0,00</strong>
+                </div>
+
+                <hr class="divisor-resumo">
+                <div class="resumo-linha total">
+                    <span>Total</span>
+                    <strong id="total-carrinho">R$ 0,00</strong>
+                </div>
+                <button class="btn-finalizar" onclick="window.finalizarCompra()">Finalizar Compra</button>
+                <a href="index.html" class="btn-continuar-comprando">Continuar Comprando</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="rodape-beneficios">
+        <div class="container-flex beneficios-grid">
+            <div class="beneficio-item">
+                <i class="fa-solid fa-shield-halved beneficio-icon"></i>
+                <div><strong>PRODUTOS DE QUALIDADE</strong><br><small>Selecionados para sua segurança</small></div>
+            </div>
+            <div class="beneficio-item">
+                <i class="fa-regular fa-thumbs-up beneficio-icon"></i>
+                <div><strong>CONFORTO E SEGURANÇA</strong><br><small>Para o seu dia a dia</small></div>
+            </div>
+            <div class="beneficio-item">
+                <i class="fa-solid fa-headset beneficio-icon"></i>
+                <div><strong>ATENDIMENTO ESPECIALIZADO</strong><br><small>Estamos prontos para te ajudar</small></div>
+            </div>
+            <div class="beneficio-item">
+                <i class="fa-solid fa-credit-card beneficio-icon"></i>
+                <div><strong>PARCELE EM ATÉ 12X</strong><br><small>No cartão de crédito</small></div>
+            </div>
+            <div class="beneficio-item">
+                <i class="fa-solid fa-lock beneficio-icon"></i>
+                <div><strong>COMPRA 100% SEGURA</strong><br><small>Seus dados protegidos</small></div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="modal-perfil" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <button class="modal-fechar" id="fechar-modal">&times;</button>
+            <div class="modal-titulo">Minha Conta</div>
+            <div class="modal-opcoes">
+                <a href="admin.html" class="opcao-btn">
+                    <i class="fa-solid fa-gear"></i> Configurações
+                </a>
+                <a href="#" id="btn-logout" class="opcao-btn btn-sair">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sair
+                </a>
+            </div>
+        </div>
+    </div>
+<div id="modal-dados-pedido" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center;">
+    <div style="background-color: #00122a; margin: auto; padding: 25px; border: 1px solid #02234d; width: 90%; max-width: 500px; border-radius: 8px; color: #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+        <h3 style="color: #eab308; margin-bottom: 20px; text-align: center; border-bottom: 2px solid #02234d; padding-bottom: 10px;">📋 Finalizar Ordem de Serviço</h3>
+        
+        <form id="form-dados-pedido" style="display: flex; flex-direction: column; gap: 15px;">
+            <div>
+                <label style="display: block; margin-bottom: 5px; color: #cbd5e1;">Nome Completo:</label>
+                <input type="text" id="modal-nome" required style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #02234d; background: #011631; color: #fff; outline: none;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 5px; color: #cbd5e1;">Telefone / WhatsApp (com DDD):</label>
+                <input type="tel" id="modal-telefone" placeholder="(85) 99999-9999" required style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #02234d; background: #011631; color: #fff; outline: none;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 5px; color: #cbd5e1;">CPF:</label>
+                <input type="text" id="modal-cpf" placeholder="000.000.000-00" required style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #02234d; background: #011631; color: #fff; outline: none;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 5px; color: #cbd5e1;">Endereço de Entrega (Rua, Nº, Bairro):</label>
+                <input type="text" id="modal-endereco" required style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #02234d; background: #011631; color: #fff; outline: none;">
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button type="button" id="fechar-modal-pedido" style="width: 50%; padding: 12px; background-color: #475569; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Cancelar</button>
+                <button type="submit" style="width: 50%; padding: 12px; background-color: #eab308; color: #00122a; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Confirmar e Pagar</button>
+            </div>
+        </form>
+    </div>
+</div>
+   
+    <script type="module" src="js/carregar-carrinho.js"></script>
+</body>
+</html>

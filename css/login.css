@@ -1,0 +1,229 @@
+/* ==========================================================================
+   css/login.css - ESTILOS COMPLETOS DA TELA DE LOGIN E MODAL
+   ========================================================================== */
+
+:root {
+    --azul-escuro-bg: #00122a;
+    --azul-medio-nav: #001c3d;
+    --azul-card-btn: #002244;
+    --amarelo-destaque: #ffb703;
+    --texto-claro: #ffffff;
+    --texto-escuro: #00122a;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: var(--azul-escuro-bg);
+    background-image: radial-gradient(circle at bottom right, #002b5c 0%, var(--azul-escuro-bg) 70%);
+    color: var(--texto-claro);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Card de Login Central */
+.login-container {
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+}
+
+.login-card {
+    background-color: #ffffff;
+    color: var(--texto-escuro);
+    padding: 40px 30px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    text-align: center;
+}
+
+.logo-area {
+    margin-bottom: 25px;
+}
+
+.logo-login {
+    max-height: 70px;
+    width: auto;
+    object-fit: contain;
+}
+
+.login-card h2 {
+    font-size: 22px;
+    color: var(--azul-escuro-bg);
+    margin-bottom: 8px;
+}
+
+.subtitulo-login {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 25px;
+}
+
+/* Campos de Input Global */
+.input-group {
+    text-align: left;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.input-group label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #475569;
+    text-transform: uppercase;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.input-group input:focus {
+    border-color: var(--azul-medio-nav);
+}
+
+/* Botão Entrar */
+.btn-entrar {
+    width: 100%;
+    background-color: var(--azul-card-btn);
+    color: #ffffff;
+    border: none;
+    padding: 14px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 10px;
+}
+
+.btn-entrar:hover {
+    background-color: var(--amarelo-destaque);
+    color: var(--texto-escuro);
+}
+
+/* Rodapé do Card */
+.login-footer {
+    margin-top: 25px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.login-footer a {
+    color: var(--azul-medio-nav);
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.login-footer a:hover {
+    text-decoration: underline;
+    color: var(--amarelo-destaque);
+}
+
+/* ==========================================================================
+   ESTILOS DO MODAL DE CADASTRO (SOBREPOSIÇÃO)
+   ========================================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: none; /* Controlado via JS */
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    padding: 20px;
+}
+
+.modal-card {
+    background-color: #ffffff;
+    color: var(--texto-escuro);
+    width: 100%;
+    max-width: 400px;
+    /* Padding levemente reduzido nas laterais para acomodar bem os campos em telas menores */
+    padding: 30px 25px; 
+    border-radius: 10px;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    /* Propriedades adicionadas para evitar estouro de tela com muitos campos */
+    max-height: 95vh; 
+    overflow-y: auto;  
+}
+
+.btn-fechar {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 30px;
+    cursor: pointer;
+    color: #94a3b8;
+    line-height: 1;
+}
+
+.btn-fechar:hover {
+    color: #ef4444;
+}
+
+.modal-card h2 {
+    font-size: 22px;
+    color: var(--azul-escuro-bg);
+    margin-bottom: 6px;
+}
+
+.modal-card p {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 25px;
+}
+
+.form-modal {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Botão Cadastrar do Modal */
+.btn-confirmar-cadastro {
+    width: 100%;
+    background-color: var(--amarelo-destaque);
+    color: var(--texto-escuro);
+    border: none;
+    padding: 14px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s, color 0.2s;
+    margin-top: 10px;
+}
+
+.btn-confirmar-cadastro:hover {
+    background-color: var(--azul-escuro-bg);
+    color: #ffffff;
+}
+
+/* Força o alerta do SweetAlert2 a ficar sempre acima da sobreposição do modal */
+.swal2-container {
+    z-index: 1000000 !important; 
+}

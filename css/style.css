@@ -1,0 +1,50 @@
+/* Reset Básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8fafc;
+    color: #334155;
+    line-height: 1.6;
+}
+
+/* MENU DE NAVEGAÇÃO */
+header {
+    background-color: #1e293b; /* Azul Escuro */
+    padding: 15px 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.menu-topo {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    list-style: none;
+}
+
+.menu-topo a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.menu-topo a:hover, 
+.menu-topo a.ativo {
+    color: #eab308; /* Amarelo (cor de destaque) */
+}
+
+/* Ajuste para telas pequenas */
+@media (max-width: 768px) {
+    .menu-topo {
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+}

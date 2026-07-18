@@ -1,0 +1,300 @@
+/* =========================================================
+   ESTILOS GERAIS E LAYOUT - CARRINHO
+   ========================================================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    background-color: #02234d; 
+    color: #ffffff;
+}
+
+.container-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+/* =========================================================
+   TOPO SUPERIOR (AZUL ESCURO)
+   ========================================================= */
+.topo-superior {
+    background-color: #00122a;
+    color: #ffffff;
+    padding: 12px 0;
+    font-size: 13px;
+    border-bottom: 1px solid #02234d;
+}
+
+.icon-destaque {
+    color: #eab308;
+    margin-right: 5px;
+}
+
+.botoes-usuario-topo {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.botoes-usuario-topo span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.botoes-usuario-topo a {
+    color: #ffffff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: bold;
+    transition: color 0.2s;
+}
+
+.botoes-usuario-topo a:hover {
+    color: #eab308;
+}
+
+/* =========================================================
+   HEADER PRINCIPAL
+   ========================================================= */
+.header-principal {
+    background-color: #00122a;
+    padding: 20px 0;
+    border-bottom: 1px solid #02234d;
+}
+
+.header-conteudo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-site {
+    max-height: 60px;
+    width: auto;
+}
+
+.busca-area {
+    display: flex;
+    width: 50%;
+    max-width: 500px;
+}
+
+.busca-area input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #02234d;
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    outline: none;
+    background-color: #ffffff;
+    color: #0f172a;
+}
+
+.busca-area input:focus {
+    border-color: #eab308;
+}
+
+.btn-busca {
+    padding: 0 20px;
+    background-color: #02234d;
+    color: #ffffff;
+    border: 2px solid #02234d;
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+}
+
+.btn-busca:hover {
+    background-color: #eab308;
+    color: #00122a;
+    border-color: #eab308;
+}
+
+.atendimento-whats {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.whats-large {
+    font-size: 38px;
+    color: #22c55e;
+}
+
+.atendimento-whats div {
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+    color: #ffffff;
+}
+
+.atendimento-whats strong {
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.fale-conosco {
+    color: #22c55e;
+    font-weight: bold;
+}
+
+/* =========================================================
+   NAVEGAÇÃO 
+   ========================================================= */
+.nav-principal {
+    background-color: #00122a;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.links-menu {
+    display: flex;
+    list-style: none;
+    gap: 5px;
+}
+
+.links-menu li a {
+    display: block;
+    padding: 20px 15px;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.links-menu li a:hover, 
+.links-menu li a.active {
+    background-color: #02234d;
+    color: #eab308;
+}
+
+/* =========================================================
+   RODAPÉ DE BENEFÍCIOS
+   ========================================================= */
+.rodape-beneficios {
+    background-color: #00122a;
+    border-top: 1px solid #02234d;
+    padding: 30px 0;
+    margin-top: auto;
+}
+
+.beneficios-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 20px;
+}
+
+.beneficio-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: #cbd5e1;
+    min-width: 200px;
+}
+
+.beneficio-icon {
+    font-size: 28px;
+    color: #eab308;
+}
+
+.beneficio-item strong {
+    color: #ffffff;
+    font-size: 13px;
+}
+
+/* =========================================================
+   ESTILOS DO MODAL CENTRALIZADO (MINHA CONTA)
+   ========================================================= */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-box {
+    background: #00122a;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 320px;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    text-align: center;
+    border: 1px solid #02234d;
+}
+
+.modal-fechar {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #94a3b8;
+}
+
+.modal-fechar:hover {
+    color: #ffffff;
+}
+
+.modal-titulo {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #ffffff;
+}
+
+.modal-opcoes {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.opcao-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    background: #02234d;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.opcao-btn:hover {
+    background: #1e293b;
+}
+
+.btn-sair {
+    background: #7f1d1d;
+    color: #fca5a5;
+}
+
+.btn-sair:hover {
+    background: #991b1b;
+}

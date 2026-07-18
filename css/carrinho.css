@@ -1,0 +1,234 @@
+/* =========================================================
+   ESTILOS DA TELA DO CARRINHO (ESPECÍFICO)
+   ========================================================= */
+.layout-carrinho {
+    padding: 40px 0;
+    gap: 40px;
+    align-items: flex-start;
+}
+
+.secao-carrinho-conteudo {
+    flex: 1;
+    background: #00122a;
+    border-radius: 8px;
+    padding: 30px;
+    border: 1px solid #02234d;
+}
+
+.secao-carrinho-conteudo h1 {
+    font-size: 24px;
+    margin-bottom: 25px;
+    color: #eab308; 
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #02234d;
+    padding-bottom: 15px;
+}
+
+.lista-produtos-carrinho {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.item-carrinho-card {
+    background: #02234d;
+    border-radius: 6px;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #1e293b;
+}
+
+.item-detalhes {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.item-titulo {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.item-preco {
+    font-size: 15px;
+    color: #eab308; 
+    font-weight: bold;
+}
+
+.btn-remover-item {
+    background: #7f1d1d;
+    color: #fca5a5;
+    border: none;
+    border-radius: 6px;
+    width: 38px;
+    height: 38px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.btn-remover-item:hover {
+    background: #991b1b;
+}
+
+.carrinho-vazio {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 16px;
+    padding: 20px 0;
+}
+
+/* Resumo do Pedido */
+.secao-resumo-pedido {
+    width: 320px;
+}
+
+.resumo-card {
+    background: #00122a;
+    border-radius: 8px;
+    padding: 25px;
+    border: 1px solid #02234d;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.resumo-card h2 {
+    font-size: 18px;
+    color: #ffffff;
+    margin-bottom: 10px;
+}
+
+/* Área do Cupom */
+.cupom-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #02234d;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #1e293b;
+    margin-bottom: 5px;
+}
+
+.cupom-area label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #cbd5e1;
+}
+
+.cupom-input-grupo {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+}
+
+.cupom-input-grupo input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #00122a;
+    border-radius: 4px;
+    background: #00122a;
+    color: #ffffff;
+    outline: none;
+    text-transform: uppercase;
+    min-width: 0;
+}
+
+.cupom-input-grupo input:focus {
+    border-color: #eab308;
+}
+
+.cupom-input-grupo button {
+    background: #eab308;
+    color: #00122a;
+    border: none;
+    border-radius: 4px;
+    padding: 0 12px;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+.cupom-input-grupo button:hover {
+    background: #ca8a04;
+}
+
+.resumo-linha {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #cbd5e1;
+}
+
+.resumo-linha strong {
+    color: #ffffff;
+}
+
+.resumo-linha.total {
+    font-size: 18px;
+}
+
+.resumo-linha.total strong {
+    color: #eab308; 
+}
+
+.divisor-resumo {
+    border: 0;
+    border-top: 1px solid #02234d;
+    margin: 5px 0;
+}
+
+.btn-finalizar {
+    background: #22c55e;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 15px;
+    transition: background 0.2s;
+    margin-top: 10px;
+}
+
+.btn-finalizar:hover {
+    background: #16a34a;
+}
+
+.btn-continuar-comprando {
+    background: #02234d;
+    color: #eab308; 
+    border: 1px solid #eab308; 
+    border-radius: 6px;
+    padding: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.btn-continuar-comprando:hover {
+    background: #eab308; 
+    color: #00122a;
+}
+
+/* Responsividade básica para telas menores */
+@media (max-width: 768px) {
+    .layout-carrinho {
+        flex-direction: column;
+    }
+    .secao-resumo-pedido {
+        width: 100%;
+    }
+}
