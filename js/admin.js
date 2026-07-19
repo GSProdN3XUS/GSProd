@@ -1,7 +1,7 @@
 // Importações
 import { db } from "./fireconfig.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 const auth = getAuth();
 
@@ -73,7 +73,7 @@ window.gerarNotaPDF = (vendaCodificada) => {
     
     const nomeProd = String(venda.produtoNome || '---');
     const tamProd = String(venda.tamanho || '---');
-    const nomeFormatado = `${nomeProd} (${tamProd})`.substring(0, 18);
+    const nomeFormatado = `${nomeProd} (${tamProd})`.substring(0, 20);
     
     const qtdFormatada = String(venda.quantidade || '01').padStart(2, '0');
     const valorPago = venda.valorTotal ? Number(venda.valorTotal).toFixed(2) : '0.00';
@@ -126,6 +126,117 @@ window.gerarNotaPDF = (vendaCodificada) => {
     // Salva o PDF com o estilo de cupom limpo
     doc.save(`Cupom_Venda_${idVenda}.pdf`);
 };
+
+/**
+ * AÇÃO GLOBAL: DELETAR VENDA E ESTORNAR ESTOQUE
+ * Esta função é chamada pelo botão 'Excluir' na tabela de histórico de vendas.
+ * @param {string} vendaId - O ID do documento da venda a ser excluída.
+ */
+window.deletarVenda = async (vendaId) => {
+    if (!vendaId) return;
+
+    const { isConfirmed } = await Swal.fire({
+        title: 'Confirmar Exclusão',
+        text: "Esta ação irá remover o registro da venda e devolver os itens ao estoque. Deseja continuar?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ffcc00',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sim, excluir!',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (isConfirmed) {
+        Swal.fire({ title: "Excluindo...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        try {
+            const vendaRef = doc(db, "vendas", vendaId);
+            const vendaSnap = await getDoc(vendaRef);
+
+            if (!vendaSnap.exists()) {
+                throw new Error("Venda não encontrada no banco de dados.");
+            }
+
+            const vendaData = vendaSnap.data();
+            const { produtoId, tamanho, quantidade } = vendaData;
+
+            // 1. Estornar o estoque
+            const produtoRef = doc(db, "produtos", produtoId);
+            const produtoSnap = await getDoc(produtoRef);
+
+            // VERIFICAÇÃO: Só estorna se o produto ainda existir no banco de dados
+            if (produtoSnap.exists()) {
+                const produtoData = produtoSnap.data();
+                const novaGrade = { ...produtoData.grade };
+                novaGrade[tamanho] = (novaGrade[tamanho] || 0) + quantidade;
+                await updateDoc(produtoRef, { grade: novaGrade });
+            } else {
+                console.warn(`Produto com ID ${produtoId} não encontrado. O estoque não foi estornado, mas a venda será deletada.`);
+            }
+            // 2. Deletar o registro da venda
+            await deleteDoc(vendaRef);
+
+            Swal.fire('Sucesso!', 'A venda foi excluída e o estoque atualizado.', 'success');
+            puxarHistoricoVendas(); // Atualiza a tabela na tela
+        } catch (error) {
+            console.error("Erro ao deletar venda:", error);
+            Swal.fire('Erro!', 'Não foi possível completar a exclusão. Verifique o console para mais detalhes.', 'error');
+        }
+    }
+};
+
+async function puxarHistoricoVendas() {
+    const corpoTabelaVendas = document.getElementById("tabela-historico-vendas-corpo");
+    if (!corpoTabelaVendas) return;
+
+    try {
+        const querySnapshot = await getDocs(collection(db, "vendas"));
+        corpoTabelaVendas.innerHTML = "";
+
+        if (querySnapshot.empty) {
+            corpoTabelaVendas.innerHTML = `<tr><td colspan="6" class="has-text-centered has-text-grey">Nenhuma venda registrada ainda.</td></tr>`;
+            return;
+        }
+
+        const listaVendas = [];
+        querySnapshot.forEach((docSnap) => {
+            listaVendas.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        listaVendas.sort((a, b) => {
+            const dataA = a.dataVenda?.seconds || 0;
+            const dataB = b.dataVenda?.seconds || 0;
+            return dataB - dataA;
+        });
+
+        listaVendas.forEach((venda) => {
+            const linha = document.createElement("tr");
+            
+            // CORREÇÃO: Codifica a venda inteira para mandar pro botão do PDF
+            const vendaJSON = encodeURIComponent(JSON.stringify(venda));
+
+            linha.innerHTML = `
+                <td><span class="has-text-weight-bold has-text-info">${venda.vendaId || '------'}</span></td>
+                <td>${venda.produtoNome} <small class="has-text-grey">(${venda.codigo || 'S/C'})</small></td>
+                <td><span class="tag is-dark">${venda.tamanho}</span></td>
+                <td>${venda.quantidade}</td>
+                <td class="has-text-success">${venda.valorTotal ? venda.valorTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : 'R$ 0,00'}</td>
+                <td class="has-text-centered">
+                    <!-- Botão de gerar nota modificado -->
+                    <button class="button is-small is-warning is-light" onclick="gerarNotaPDF('${vendaJSON}')">
+                        <i class="fas fa-file-invoice mr-1"></i> Nota
+                    </button>
+                    <button class="button is-small is-danger is-light ml-1" onclick="window.deletarVenda('${venda.id}')">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
+            corpoTabelaVendas.appendChild(linha);
+        });
+    } catch (e) {
+        console.error("Erro ao carregar histórico:", e);
+    }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     // Variáveis globais
@@ -243,56 +354,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         } catch (e) {
             selectVendaProduto.innerHTML = `<option value="" disabled>Erro ao carregar estoque</option>`;
-        }
-    }
-
-    async function puxarHistoricoVendas() {
-        const corpoTabelaVendas = document.getElementById("tabela-historico-vendas-corpo");
-        if (!corpoTabelaVendas) return;
-
-        try {
-            const querySnapshot = await getDocs(collection(db, "vendas"));
-            corpoTabelaVendas.innerHTML = "";
-
-            if (querySnapshot.empty) {
-                corpoTabelaVendas.innerHTML = `<tr><td colspan="6" class="has-text-centered has-text-grey">Nenhuma venda registrada ainda.</td></tr>`;
-                return;
-            }
-
-            const listaVendas = [];
-            querySnapshot.forEach((docSnap) => {
-                listaVendas.push(docSnap.data());
-            });
-
-            listaVendas.sort((a, b) => {
-                const dataA = a.dataVenda?.seconds || 0;
-                const dataB = b.dataVenda?.seconds || 0;
-                return dataB - dataA;
-            });
-
-            listaVendas.forEach((venda) => {
-                const linha = document.createElement("tr");
-                
-                // CORREÇÃO: Codifica a venda inteira para mandar pro botão do PDF
-                const vendaJSON = encodeURIComponent(JSON.stringify(venda));
-
-                linha.innerHTML = `
-                    <td><span class="has-text-weight-bold has-text-info">${venda.vendaId || '------'}</span></td>
-                    <td>${venda.produtoNome} <small class="has-text-grey">(${venda.codigo || 'S/C'})</small></td>
-                    <td><span class="tag is-dark">${venda.tamanho}</span></td>
-                    <td>${venda.quantidade}</td>
-                    <td class="has-text-success">${venda.valorTotal ? venda.valorTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : 'R$ 0,00'}</td>
-                    <td class="has-text-centered">
-                        <!-- Botão de gerar nota modificado -->
-                        <button class="button is-small is-warning is-light" onclick="gerarNotaPDF('${vendaJSON}')">
-                            <i class="fas fa-file-invoice mr-1"></i> Nota
-                        </button>
-                    </td>
-                `;
-                corpoTabelaVendas.appendChild(linha);
-            });
-        } catch (e) {
-            console.error("Erro ao carregar histórico:", e);
         }
     }
 
