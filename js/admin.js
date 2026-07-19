@@ -1,6 +1,7 @@
 // Importações
 import { db } from "./fireconfig.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js";
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 const auth = getAuth();
@@ -590,21 +591,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
             Swal.fire({ title: "Salvando...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
+            // OTIMIZAÇÃO DE IMAGEM: Enviar para o Firebase Storage
             try {
+                const storage = getStorage();
+                // Cria um nome de arquivo único usando o código do produto e a data/hora
+                const nomeArquivo = `produtos/${codigo}-${Date.now()}.jpg`;
+                const storageRef = ref(storage, nomeArquivo);
+
+                // Faz o upload da imagem em formato Base64
+                const snapshot = await uploadString(storageRef, imagemBase64, 'data_url');
+
+                // Pega a URL pública da imagem após o upload
+                const urlDaImagem = await getDownloadURL(snapshot.ref);
+
+                // Agora, salva o produto no Firestore com a URL da imagem, não a imagem inteira
                 await addDoc(collection(db, "produtos"), {
                     codigo: codigo,
                     nome: nome,
                     valor: valor,
                     grade: estoqueFinal,
-                    imagemUrl: imagemBase64,
+                    imagemUrl: urlDaImagem, // <-- MUDANÇA CRÍTICA
                     criadoEm: new Date(),
                 });
+
                 Swal.fire({ icon: "success", title: "Sucesso!", text: "Produto gravado com sucesso." });
                 formCadastro.reset();
                 nomeArquivoUpload.textContent = "Nenhum arquivo selecionado";
                 previewBox.style.display = "none";
                 imagemBase64 = "";
-            } catch (erro) {
+            } catch (erro) { 
                 Swal.fire({ icon: "error", title: "Erro", text: "Não foi possível salvar." });
             }
         });

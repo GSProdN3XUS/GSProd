@@ -1,25 +1,9 @@
-// 1. Importações diretas do SDK oficial do Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+// 1. OTIMIZAÇÃO: Importa as configurações já existentes, evitando duplicação
+import { db } from "./fireconfig.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-// 2. Credenciais oficiais
-const firebaseConfig = {
-    apiKey: "AIzaSyBfSSeo-Z8KWbH7rskRA0nrGKyVUfJlnxo",
-    authDomain: "sprodutosort.firebaseapp.com",
-    projectId: "sprodutosort",
-    storageBucket: "sprodutosort.firebasestorage.app",
-    messagingSenderId: "252165781461",
-    appId: "1:252165781461:web:ca2262b9a326004d27ef5c",
-    measurementId: "G-17K63MCDZZ"
-};
-
-// 3. Inicializa o Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-console.log("Configuração do Firebase carregada sem erros no carrinho!");
+const auth = getAuth();
 
 // Variáveis globais de controle
 let subtotalGlobal = 0;
