@@ -1,0 +1,131 @@
+/* css/compras.css */
+
+.container-compra {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #011631;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.loader-container {
+    text-align: center;
+    padding: 80px 20px;
+    color: #94a3b8;
+}
+
+.is-hidden {
+    display: none !important;
+}
+
+.produto-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 40px;
+    align-items: flex-start;
+}
+
+.produto-imagem-wrapper img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid #02234d;
+}
+
+.produto-detalhes-wrapper {
+    color: #e2e8f0;
+}
+
+.produto-titulo {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 10px;
+    line-height: 1.2;
+}
+
+.produto-preco-grande {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #eab308;
+    margin-bottom: 30px;
+}
+
+.secao-selecao {
+    margin-bottom: 25px;
+}
+
+.label-selecao {
+    display: block;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #cbd5e1;
+    margin-bottom: 12px;
+}
+
+.opcoes-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.opcoes-container input[type="radio"] {
+    display: none;
+}
+
+.opcoes-container label {
+    padding: 10px 20px;
+    border: 2px solid #334155;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    font-weight: bold;
+}
+
+.opcoes-container input[type="radio"]:checked + label {
+    background-color: #eab308;
+    border-color: #eab308;
+    color: #011631;
+}
+
+.opcoes-container input[type="radio"]:disabled + label {
+    background-color: #1e293b;
+    color: #475569;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.secao-quantidade {
+    margin-bottom: 30px;
+}
+
+.input-quantidade {
+    width: 100px;
+    padding: 10px;
+    font-size: 1.1rem;
+    text-align: center;
+    background-color: #000c1a;
+    border: 2px solid #334155;
+    color: #fff;
+    border-radius: 6px;
+}
+
+.btn-adicionar-carrinho {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    background-color: #16a34a; /* Verde */
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-adicionar-carrinho:hover {
+    background-color: #15803d;
+}

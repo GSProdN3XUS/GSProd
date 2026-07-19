@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 
         querySnapshot.forEach((doc) => {
             const produto = doc.data();
+            const produtoId = doc.id;
             
             // CORREÇÃO: puxando as variáveis com os nomes exatos do banco
             const nomeProduto = produto.nome || "Produto sem nome";
@@ -34,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                     <div class="produto-titulo">${nomeProduto}</div>
                     <div class="produto-preco">${precoFormatado}</div>
                     
-                    <button class="btn-comprar btn-verde" onclick="comprarAgora('${nomeProduto}', ${precoProduto})">
+                    <button class="btn-comprar btn-verde" onclick="window.location.href='compra.html?id=${produtoId}'">
                         <i class="fa-solid fa-cart-shopping"></i> COMPRAR
                     </button>
 

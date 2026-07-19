@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Produto - S Produtos Ortopédicos</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/compras.css">
+</head>
+<body>
+
+    <div class="topo-superior">
+        <div class="container-flex">
+            <div><i class="fa-solid fa-truck-fast icon-destaque"></i> Enviamos para <strong>Fortaleza e região</strong></div>
+            
+            <div class="botoes-usuario-topo">
+                <span><i class="fa-brands fa-whatsapp"></i> (85) 99815-4761</span>
+                <a href="login.html" id="btn-usuario-topo"><i class="fa-regular fa-user"></i> Minha conta</a>
+                <a href="carrinho.html" id="carrinho-topo"><i class="fa-solid fa-cart-shopping"></i> Carrinho (0)</a>
+            </div>
+        </div>
+    </div>
+
+    <header class="header-principal">
+        <div class="container-flex header-conteudo">
+            <a href="index.html" class="logo-area">
+                <img src="img/logo.png" alt="S Produtos Ortopédicos" class="logo-site">
+            </a>
+            <div class="busca-area">
+                <input type="text" placeholder="O que você está procurando?">
+                <button class="btn-busca"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+            <div class="atendimento-whats">
+                <i class="fa-brands fa-whatsapp whats-large"></i>
+                <div>
+                    <small>Atendimento via WhatsApp</small>
+                    <strong>(85) 99815-4761</strong>
+                    <span class="fale-conosco">Fale conosco!</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav-principal">
+        <div class="container-flex">
+            <ul class="links-menu" style="margin: 0 auto;">
+                <li><a href="index.html"><i class="fa-solid fa-house"></i> INÍCIO</a></li>
+                <li><a href="produtos.html"><i class="fa-solid fa-box-open"></i> PRODUTOS</a></li>
+                <li><a href="#"><i class="fa-solid fa-percent"></i> OFERTAS</a></li>
+                <li><a href="#"><i class="fa-regular fa-star"></i> LANÇAMENTOS</a></li>
+                <li><a href="#"><i class="fa-solid fa-users"></i> SOBRE NÓS</a></li>
+                <li><a href="contato.html"><i class="fa-regular fa-envelope"></i> CONTATO</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container-compra">
+        <div id="loader-compra" class="loader-container">
+            <i class="fas fa-spinner fa-spin fa-3x"></i>
+            <p>Carregando detalhes do produto...</p>
+        </div>
+
+        <div id="conteudo-produto" class="produto-grid is-hidden">
+            <div class="produto-imagem-wrapper">
+                <img id="produto-imagem" src="img/placeholder.png" alt="Imagem do Produto">
+            </div>
+            <div class="produto-detalhes-wrapper">
+                <h1 id="produto-nome" class="produto-titulo">Nome do Produto</h1>
+                <p id="produto-preco" class="produto-preco-grande">R$ 0,00</p>
+                
+                <form id="form-compra">
+                    <div id="secao-tamanhos" class="secao-selecao is-hidden">
+                        <label class="label-selecao">Selecione o Tamanho:</label>
+                        <div id="opcoes-tamanho" class="opcoes-container">
+                            <!-- Opções de tamanho serão injetadas aqui -->
+                        </div>
+                    </div>
+
+                    <div id="secao-lateralidade" class="secao-selecao is-hidden">
+                        <label class="label-selecao">Selecione a Lateralidade:</label>
+                        <div id="opcoes-lateralidade" class="opcoes-container">
+                            <!-- Opções de lateralidade serão injetadas aqui -->
+                        </div>
+                    </div>
+
+                    <div class="secao-quantidade">
+                        <label for="qtd-produto" class="label-selecao">Quantidade:</label>
+                        <input type="number" id="qtd-produto" value="1" min="1" class="input-quantidade">
+                    </div>
+
+                    <button type="submit" class="btn-adicionar-carrinho">
+                        <i class="fas fa-cart-plus"></i> Adicionar ao Carrinho
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal-perfil" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <button class="modal-fechar" id="fechar-modal">&times;</button>
+            <div class="modal-titulo">Minha Conta</div>
+            <a href="admin.html" class="opcao-btn"><i class="fa-solid fa-gear"></i> Painel Admin</a>
+            <a href="#" id="btn-logout" class="opcao-btn btn-sair"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/compras.js"></script>
+</body>
+</html>
