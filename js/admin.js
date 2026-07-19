@@ -106,19 +106,29 @@ window.gerarNotaPDF = (vendaCodificada) => {
     const idVenda = String(venda.vendaId || '---');
     doc.text(`identificador: ${idVenda}`, 5, 70);
     
-    // Altera a legenda para "representante legal" e calcula a quebra caso falte espaço lateral
+    // NOVO: Adiciona dados do cliente se existirem
+    let proximaLinhaY = 75;
+    if (venda.clienteNome) {
+        const textoCliente = `Cliente: ${venda.clienteNome}`;
+        const linhasCliente = doc.splitTextToSize(textoCliente, 70);
+        doc.text(linhasCliente, 5, proximaLinhaY);
+        proximaLinhaY += (linhasCliente.length * 4.5);
+    }
+    
+    // Altera a legenda para "representante legal" e calcula a quebra
     const textoRepresentante = `representante legal: ${proprietario}`;
     const linhasRepresentante = doc.splitTextToSize(textoRepresentante, 70);
-    doc.text(linhasRepresentante, 5, 75);
+    doc.text(linhasRepresentante, 5, proximaLinhaY);
+    proximaLinhaY += (linhasRepresentante.length * 4.5);
     
-    // Descobre dinamicamente onde o CNPJ deve ficar (calculando o espaço das linhas do representante)
-    const proximaLinhaY = 75 + (linhasRepresentante.length * 4.5);
+    // Descobre dinamicamente onde o CNPJ deve ficar
     doc.text(`CNPJ: ${cnpj}`, 5, proximaLinhaY);
+    proximaLinhaY += 6;
     
     // Insere a OBS
     const textoObs = "OBS ---- troca realizada somente com apresentação do cupom fiscal";
     const linhasObs = doc.splitTextToSize(textoObs, 70); 
-    doc.text(linhasObs, 5, proximaLinhaY + 6);
+    doc.text(linhasObs, 5, proximaLinhaY);
     
     // Ajusta a posição da última linha tracejada do encerramento
     const linhaFinalY = proximaLinhaY + 6 + (linhasObs.length * 4.5);

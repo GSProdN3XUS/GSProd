@@ -5,7 +5,8 @@
 // Importações dos módulos necessários
 import { auth } from "./fireconfig.js";
 import { 
-    createUserWithEmailAndPassword, 
+    createUserWithEmailAndPassword,
+    updateProfile, 
     signInWithEmailAndPassword 
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 
@@ -95,8 +96,12 @@ if (formCadastro) {
         const email = document.getElementById("reg-email").value;
         const password = document.getElementById("reg-password").value;
 
-        createUserWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
+        createUserWithEmailAndPassword(auth, email, password).then(async (userCredential) => {
+                // NOVO: Atualiza o perfil do usuário com o nome fornecido
+                await updateProfile(userCredential.user, {
+                    displayName: nome
+                });
+
                 modal.style.display = "none";
                 formCadastro.reset();
 

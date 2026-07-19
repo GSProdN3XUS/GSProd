@@ -133,9 +133,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             itensAtuais.push({
-                nome: `${produtoAtual.nome} (${tamanho})`,
+                produtoId: produtoAtual.id,
+                nome: produtoAtual.nome,
+                tamanho: tamanho,
                 preco: produtoAtual.valor,
-                quantidade: quantidade
+                quantidade: quantidade,
+                codigo: produtoAtual.codigo
             });
 
             await setDoc(carrinhoRef, { produtos: itensAtuais }, { merge: true });

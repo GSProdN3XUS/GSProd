@@ -1,2 +1,11 @@
+# Arquivos de ambiente e segredos
+# NUNCA envie estes arquivos para um repositório público!
+.env
+js/serviceAccountKey.json
+
+# Pasta de dependências do Node.js
 node_modules/
 .env
+# Logs e arquivos de sistema
+npm-debug.log
+*.log

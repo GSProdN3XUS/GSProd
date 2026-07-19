@@ -330,6 +330,12 @@ TOTAL: R$ ${valorFinal.toFixed(2)}`;
             "2": textoOrdemServico
         });
 
+        const clienteInfo = {
+            nome: nome,
+            email: user.email,
+            telefone: telefone
+        };
+
         // Chamada direcionada para a rota do Stripe que encapsula e retém os parâmetros do Twilio
         const response = await fetch('http://localhost:3000/create-checkout-session', {
             method: 'POST',
@@ -338,7 +344,8 @@ TOTAL: R$ ${valorFinal.toFixed(2)}`;
                 numeroDonoLoja: NUMERO_DONO_LOJA,
                 variaveisConteudo: variaveisTemplate,
                 produtos: produtosArr,
-                frete: frete,
+                clienteInfo: clienteInfo, // <-- NOVO: Enviando dados do cliente
+                frete: frete, 
                 desconto: desconto
             })
         });

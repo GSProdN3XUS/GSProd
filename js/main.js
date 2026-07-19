@@ -232,17 +232,13 @@ function zerarContadorCarrinho() {
 
 function alterarNomeUsuarioTopo(user, linkMinhaConta) {
     if (linkMinhaConta) {
-        let nomeExibicao = user.displayName;
-        
-        if (!nomeExibicao && user.email) {
-            nomeExibicao = user.email.split('@')[0];
-        }
+        let nomeExibicao = user.displayName || user.email.split('@')[0];
         
         if (nomeExibicao) {
             nomeExibicao = nomeExibicao.charAt(0).toUpperCase() + nomeExibicao.slice(1);
         }
 
-        linkMinhaConta.innerHTML = `<i class="fa-regular fa-user"></i> <strong>${nomeExibicao || 'Minha conta'}</strong>`;
+        linkMinhaConta.innerHTML = `<i class="fa-regular fa-user"></i> <strong>${nomeExibicao}</strong>`;
     }
 }
 
