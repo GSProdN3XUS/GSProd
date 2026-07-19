@@ -1,7 +1,7 @@
 // 1. OTIMIZAÇÃO: Importa as configurações já existentes, evitando duplicação
 import { db } from "./fireconfig.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 const auth = getAuth();
 
@@ -25,11 +25,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 usuarioBtn.href = "#"; 
                 usuarioBtn.onclick = (e) => {
                     e.preventDefault();
+
                     const modalPerfil = document.getElementById("modal-perfil");
-                    if (modalPerfil) modalPerfil.style.display = "flex";
+                    if (modalPerfil) {
+                        // Oculta o botão de admin se não for o usuário correto
+                        const btnAdmin = modalPerfil.querySelector("a[href='admin.html']");
+                        if (btnAdmin) {
+                            btnAdmin.style.display = user.email === "admin@admin.com" ? "flex" : "none";
+                        }
+                        modalPerfil.style.display = "flex";
+                    }
                 };
             }
-
             carregarItensCarrinho(user.uid);
         } else {
             console.warn("Nenhum usuário logado detectado na página do carrinho.");
@@ -285,6 +292,54 @@ async function executarEnvioOrdemServico(nome, telefone, cpf, endereco) {
         didOpen: () => { Swal.showLoading(); }
     });
 
+    // --- LÓGICA DE REGISTRO DE VENDA E BAIXA DE ESTOQUE (CLIENT-SIDE) ---
+    try {
+        const carrinhoRef = doc(db, "carrinhos", user.uid);
+        const carrinhoSnap = await getDoc(carrinhoRef);
+
+        if (carrinhoSnap.exists() && carrinhoSnap.data().produtos.length > 0) {
+            const produtos = carrinhoSnap.data().produtos;
+            const vendaIdUnica = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const batch = writeBatch(db);
+
+            for (const item of produtos) {
+                // CORREÇÃO: Garante que o ID do produto seja pego, não importa como foi salvo
+                const idDoProduto = item.produtoId || item.id;
+
+                // 1. Registra a venda no histórico do admin
+                const vendaRef = doc(collection(db, "vendas"));
+                batch.set(vendaRef, {
+                    vendaId: vendaIdUnica,
+                    produtoId: idDoProduto,
+                    produtoNome: item.nome,
+                    codigo: item.codigo,
+                    tamanho: item.tamanho,
+                    quantidade: item.quantidade,
+                    valorTotal: (item.preco * item.quantidade),
+                    dataVenda: new Date(),
+                    clienteNome: nome,
+                    clienteEmail: user.email
+                });
+
+                // 2. Dá baixa no estoque do produto
+                const produtoRef = doc(db, "produtos", idDoProduto);
+                const produtoSnap = await getDoc(produtoRef);
+                if (produtoSnap.exists()) {
+                    const produtoData = produtoSnap.data();
+                    const estoqueAtual = produtoData.grade[item.tamanho] || 0;
+                    const novoEstoque = Math.max(0, estoqueAtual - item.quantidade);
+                    batch.update(produtoRef, { [`grade.${item.tamanho}`]: novoEstoque });
+                }
+            }
+            await batch.commit();
+            console.log(`[CLIENT-SIDE] Venda ${vendaIdUnica} registrada e estoque atualizado.`);
+        }
+    } catch (dbError) {
+        console.error("Erro ao registrar venda ou dar baixa no estoque:", dbError);
+        Swal.fire('Erro de Banco de Dados', 'Não foi possível registrar sua venda. Por favor, tente novamente.', 'error');
+        return; // Interrompe o fluxo se não conseguir salvar no DB
+    }
+
     try {
         let listaMensagem = "";
         let produtosArr = [];
@@ -330,12 +385,6 @@ TOTAL: R$ ${valorFinal.toFixed(2)}`;
             "2": textoOrdemServico
         });
 
-        const clienteInfo = {
-            nome: nome,
-            email: user.email,
-            telefone: telefone
-        };
-
         // Chamada direcionada para a rota do Stripe que encapsula e retém os parâmetros do Twilio
         const response = await fetch('http://localhost:3000/create-checkout-session', {
             method: 'POST',
@@ -344,7 +393,6 @@ TOTAL: R$ ${valorFinal.toFixed(2)}`;
                 numeroDonoLoja: NUMERO_DONO_LOJA,
                 variaveisConteudo: variaveisTemplate,
                 produtos: produtosArr,
-                clienteInfo: clienteInfo, // <-- NOVO: Enviando dados do cliente
                 frete: frete, 
                 desconto: desconto
             })

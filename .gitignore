@@ -1,11 +1,8 @@
-# Arquivos de ambiente e segredos
-# NUNCA envie estes arquivos para um repositório público!
-.env
-js/serviceAccountKey.json
-
-# Pasta de dependências do Node.js
+# Dependências do Node.js
 node_modules/
+
+# Arquivos de ambiente - Contêm chaves secretas e não devem ser compartilhados!
 .env
-# Logs e arquivos de sistema
-npm-debug.log
+
+# Arquivos de Log
 *.log

@@ -35,11 +35,11 @@ document.addEventListener("DOMContentLoaded", async function() {
                     <div class="produto-titulo">${nomeProduto}</div>
                     <div class="produto-preco">${precoFormatado}</div>
                     
-                    <button class="btn-comprar btn-verde" onclick="window.location.href='compra.html?id=${produtoId}'">
+                    <button class="btn-comprar btn-verde" onclick="comprarAgora({ id: '${produtoId}', nome: '${nomeProduto}', preco: ${precoProduto}, codigo: '${produto.codigo || ''}' })">
                         <i class="fa-solid fa-cart-shopping"></i> COMPRAR
                     </button>
 
-                    <button class="btn-comprar btn-amarelo" onclick="adicionarComAnimacao('${nomeProduto}', ${precoProduto}, this)">
+                    <button class="btn-comprar btn-amarelo" onclick="adicionarComAnimacao({ id: '${produtoId}', nome: '${nomeProduto}', preco: ${precoProduto}, codigo: '${produto.codigo || ''}' }, this)">
                         <i class="fa-solid fa-cart-plus"></i> ADICIONAR
                     </button>
                 </div>

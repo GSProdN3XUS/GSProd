@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const modalPerfil = document.getElementById("modal-perfil");
         const fecharModal = document.getElementById("fechar-modal");
         const btnLogout = document.getElementById("btn-logout");
+        const btnAdmin = modalPerfil ? modalPerfil.querySelector("a[href='admin.html']") : null;
 
         if (user) {
             await atualizarContadorCarrinhoFirestore(user.uid);
@@ -37,6 +38,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 e.preventDefault();
                 if (modalPerfil) modalPerfil.style.display = "flex";
             };
+
+            // Oculta o botão de admin se não for o usuário correto
+            if (btnAdmin) {
+                btnAdmin.style.display = user.email === "admin@admin.com" ? "flex" : "none";
+            }
 
             if (fecharModal) {
                 fecharModal.onclick = function() {
@@ -96,7 +102,7 @@ window.irParaCarrinho = function() {
 };
 
 // Função chamada pelo botão verde: compra direta que salva no banco e redireciona
-window.comprarAgora = async function(nome, preco) {
+window.comprarAgora = async function(produto) {
     const user = auth.currentUser;
     
     if (!user) {
@@ -113,7 +119,13 @@ window.comprarAgora = async function(nome, preco) {
             itensCarrinho = docSnap.data().produtos;
         }
         
-        itensCarrinho.push({ nome: nome, preco: preco });
+        itensCarrinho.push({
+            produtoId: produto.id, // Mantido para clareza, já estava correto
+            nome: produto.nome,
+            preco: produto.preco,
+            codigo: produto.codigo,
+            tamanho: 'Único' // Define um tamanho padrão para compra rápida
+        });
         
         await setDoc(carrinhoRef, {
             usuarioId: user.uid,
@@ -129,7 +141,7 @@ window.comprarAgora = async function(nome, preco) {
 };
 
 // Função chamada pelo botão amarelo: animação visual e incremento/salvamento síncrono
-window.adicionarComAnimacao = async function(nome, preco, botaoElemento) {
+window.adicionarComAnimacao = async function(produto, botaoElemento) {
     const user = auth.currentUser;
     
     if (!user) {
@@ -178,7 +190,13 @@ window.adicionarComAnimacao = async function(nome, preco, botaoElemento) {
             itensCarrinho = docSnap.data().produtos;
         }
         
-        itensCarrinho.push({ nome: nome, preco: preco });
+        itensCarrinho.push({
+            produtoId: produto.id, // Mantido para clareza, já estava correto
+            nome: produto.nome,
+            preco: produto.preco,
+            codigo: produto.codigo,
+            tamanho: 'Único' // Define um tamanho padrão para compra rápida
+        });
         
         await setDoc(carrinhoRef, {
             usuarioId: user.uid,

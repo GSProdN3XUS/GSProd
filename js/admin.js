@@ -8,7 +8,8 @@ const auth = getAuth();
 
 // Proteção da Página: Redireciona para o login se não estiver logado
 onAuthStateChanged(auth, (user) => {
-    if (!user) {
+    // CORREÇÃO DE SEGURANÇA: Só permite acesso se for o usuário admin
+    if (!user || user.email !== "admin@admin.com") {
         window.location.href = "index.html";
     }
 });

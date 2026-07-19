@@ -3,21 +3,11 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 require('dotenv').config();
 
-// OTIMIZAÇÃO: Importação do Firebase Admin para comunicação segura com o banco de dados
-const admin = require('firebase-admin');
-const serviceAccount = require('./serviceAccountKey.json'); // Caminho para sua chave de serviço
-
 // Carrega de forma segura as variáveis configuradas em seu arquivo oculto local .env
 dotenv.config();
 
 // Inicialização dinâmica do SDK oficial do Stripe utilizando a chave restrita do ambiente
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
-// OTIMIZAÇÃO: Inicialização do Firebase Admin
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-const db = admin.firestore();
 
 const app = express();
 
@@ -81,7 +71,7 @@ app.post('/enviar-ordem-servico', async (req, res) => {
 // =================================================================
 app.post('/create-checkout-session', async (req, res) => {
     try {
-        const { numeroDonoLoja, variaveisConteudo, produtos, frete, desconto, clienteInfo } = req.body;
+        const { numeroDonoLoja, variaveisConteudo, produtos, frete, desconto } = req.body;
 
         // Mapeamento dinâmico dos itens estruturados no Firestore para o esquema de Line Items do Stripe
         const line_items = produtos.map(item => ({
@@ -131,13 +121,7 @@ app.post('/create-checkout-session', async (req, res) => {
 
         // RETENÇÃO ESTRATÉGICA: Vincula o ID exclusivo da sessão de pagamento aos metadados do Twilio na memória.
         // Isso assegura que a mensagem do WhatsApp só será transmitida quando o status mudar para concluído.
-        ordensPendentes.set(session.id, { 
-            numeroDonoLoja, 
-            variaveisConteudo,
-            produtos, // Salva os produtos para registrar a venda depois
-            clienteInfo, // Salva os dados do cliente
-            valorTotal: session.amount_total / 100 // Salva o valor total em BRL
-        });
+        ordensPendentes.set(session.id, { numeroDonoLoja, variaveisConteudo });
 
         // Retorna a URL de pagamento para que o front-end efetue o redirecionamento seguro
         res.json({ url: session.url });
@@ -171,35 +155,10 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
         const dadosDoPedido = ordensPendentes.get(session.id);
 
         if (dadosDoPedido) {
-            const { numeroDonoLoja, variaveisConteudo, produtos, clienteInfo } = dadosDoPedido;
+            const { numeroDonoLoja, variaveisConteudo } = dadosDoPedido;
 
             try {
                 console.log(`[STRIPE] Pagamento verificado com sucesso para a sessão: ${session.id}`);
-                
-                // --- LÓGICA PARA SALVAR VENDA NO FIREBASE ---
-                const vendaIdUnica = Math.random().toString(36).substring(2, 8).toUpperCase();
-                const batch = db.batch();
-
-                produtos.forEach(item => {
-                    const vendaRef = db.collection('vendas').doc(); // Cria um novo documento de venda
-                    batch.set(vendaRef, {
-                        vendaId: vendaIdUnica,
-                        produtoId: item.produtoId,
-                        produtoNome: item.nome,
-                        codigo: item.codigo,
-                        tamanho: item.tamanho,
-                        quantidade: item.quantidade,
-                        valorTotal: (item.preco * item.quantidade),
-                        dataVenda: admin.firestore.FieldValue.serverTimestamp(),
-                        clienteNome: clienteInfo.nome,
-                        clienteEmail: clienteInfo.email
-                    });
-                });
-
-                await batch.commit();
-                console.log(`[FIREBASE] Vendas do pedido ${vendaIdUnica} salvas com sucesso no Firestore.`);
-                // --- FIM DA LÓGICA FIREBASE ---
-
                 console.log("[TWILIO] Iniciando disparo seguro da Ordem de Serviço para o WhatsApp da loja...");
 
                 // Aciona a sua lógica consagrada do Twilio de forma totalmente segura e assíncrona
