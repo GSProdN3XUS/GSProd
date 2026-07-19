@@ -124,7 +124,8 @@ window.comprarAgora = async function(produto) {
             nome: produto.nome,
             preco: produto.preco,
             codigo: produto.codigo,
-            tamanho: 'Único' // Define um tamanho padrão para compra rápida
+            tamanho: 'Único',
+            quantidade: 1
         });
         
         await setDoc(carrinhoRef, {
@@ -195,7 +196,8 @@ window.adicionarComAnimacao = async function(produto, botaoElemento) {
             nome: produto.nome,
             preco: produto.preco,
             codigo: produto.codigo,
-            tamanho: 'Único' // Define um tamanho padrão para compra rápida
+            tamanho: 'Único',
+            quantidade: 1
         });
         
         await setDoc(carrinhoRef, {

@@ -1,54 +1,79 @@
 // js/carregar-produtos.js
-// Certifique-se de importar a sua base de dados ou configuração se precisar
+// Importa a base de dados e os métodos do Firestore
 import { db } from "./fireconfig.js";
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import {
+  collection,
+  getDocs,
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-document.addEventListener("DOMContentLoaded", async function() {
-    const vitrineDinamica = document.getElementById("vitrine-dinamica");
+document.addEventListener("DOMContentLoaded", async function () {
+  const vitrineDinamica = document.getElementById("vitrine-dinamica");
+  if (!vitrineDinamica) return;
 
-    if (!vitrineDinamica) return;
+  try {
+    const querySnapshot = await getDocs(collection(db, "produtos"));
+    vitrineDinamica.innerHTML = "";
 
-    try {
-        // Buscar produtos da coleção "produtos" no Firestore
-        const querySnapshot = await getDocs(collection(db, "produtos"));
-        
-        vitrineDinamica.innerHTML = ""; // Limpa a vitrine antes de preencher
+    querySnapshot.forEach((doc) => {
+      const produto = doc.data() || {};
+      const produtoId = doc.id;
+      const nomeProduto = produto.nome || "Produto sem nome";
+      const precoProduto = parseFloat(produto.valor) || 0.0;
+      const imagemProduto = produto.imagemUrl || "img/placeholder.png";
+      const codigoProduto = produto.codigo || "";
+      const precoFormatado = precoProduto.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
 
-        querySnapshot.forEach((doc) => {
-            const produto = doc.data();
-            const produtoId = doc.id;
-            
-            // CORREÇÃO: puxando as variáveis com os nomes exatos do banco
-            const nomeProduto = produto.nome || "Produto sem nome";
-            const precoProduto = produto.valor || 0.00; // Antes estava produto.preco
-            const imagemProduto = produto.imagemUrl || "img/placeholder.png"; // Antes estava produto.imagem
-
-            // Formatação do valor para moeda brasileira
-            const precoFormatado = precoProduto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-            // Criação do card do produto contendo o Botão Verde e o Botão Amarelo
-            const cardProduto = `
-                <div class="produto-card">
-                    <div class="produto-imagem-baia">
-                        <img src="${imagemProduto}" alt="${nomeProduto}">
-                    </div>
-                    <div class="produto-titulo">${nomeProduto}</div>
-                    <div class="produto-preco">${precoFormatado}</div>
-                    
-                    <button class="btn-comprar btn-verde" onclick="comprarAgora({ id: '${produtoId}', nome: '${nomeProduto}', preco: ${precoProduto}, codigo: '${produto.codigo || ''}' })">
-                        <i class="fa-solid fa-cart-shopping"></i> COMPRAR
-                    </button>
-
-                    <button class="btn-comprar btn-amarelo" onclick="adicionarComAnimacao({ id: '${produtoId}', nome: '${nomeProduto}', preco: ${precoProduto}, codigo: '${produto.codigo || ''}' }, this)">
-                        <i class="fa-solid fa-cart-plus"></i> ADICIONAR
-                    </button>
+      const cardProduto = document.createElement("div");
+      cardProduto.className = "produto-card";
+      cardProduto.innerHTML = `
+                <div class="produto-imagem-baia">
+                    <img src="${imagemProduto}" alt="${nomeProduto}">
                 </div>
+                <div class="produto-titulo">${nomeProduto}</div>
+                <div class="produto-preco">${precoFormatado}</div>
             `;
 
-            vitrineDinamica.innerHTML += cardProduto;
+      const botaoComprar = document.createElement("button");
+      botaoComprar.className = "btn-comprar btn-verde";
+      botaoComprar.type = "button";
+      botaoComprar.innerHTML =
+        '<i class="fa-solid fa-cart-shopping"></i> COMPRAR';
+      botaoComprar.addEventListener("click", () => {
+        window.comprarAgora({
+          id: produtoId,
+          nome: nomeProduto,
+          preco: precoProduto,
+          codigo: codigoProduto,
         });
+      });
 
-    } catch (error) {
-        console.error("Erro ao carregar os produtos da vitrine:", error);
-    }
+      const botaoAdicionar = document.createElement("button");
+      botaoAdicionar.className = "btn-comprar btn-amarelo";
+      botaoAdicionar.type = "button";
+      botaoAdicionar.innerHTML =
+        '<i class="fa-solid fa-cart-plus"></i> ADICIONAR';
+      botaoAdicionar.addEventListener("click", () => {
+        window.adicionarComAnimacao(
+          {
+            id: produtoId,
+            nome: nomeProduto,
+            preco: precoProduto,
+            codigo: codigoProduto,
+          },
+          botaoAdicionar,
+        );
+      });
+
+      cardProduto.appendChild(botaoComprar);
+      cardProduto.appendChild(botaoAdicionar);
+      vitrineDinamica.appendChild(cardProduto);
+    });
+  } catch (error) {
+    console.error("Erro ao carregar os produtos da vitrine:", error);
+    vitrineDinamica.innerHTML =
+      '<p style="color: #ef4444; text-align: center; width: 100%;">Não foi possível carregar os produtos. Recarregue a página.</p>';
+  }
 });

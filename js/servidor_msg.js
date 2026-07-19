@@ -115,8 +115,8 @@ app.post('/create-checkout-session', async (req, res) => {
             line_items,
             mode: 'payment',
             discounts: discounts.length > 0 ? discounts : undefined,
-            success_url: 'http://localhost:5500/index.html?pay=success', // Certifique-se de ajustar a porta conforme o seu Live Server
-            cancel_url: 'http://localhost:5500/carrinho.html?pay=canceled',
+            success_url: 'http://127.0.0.1:5500/index.html?pay=success', // Certifique-se de ajustar a porta conforme o seu Live Server
+            cancel_url: 'http://127.0.0.1:5500/carrinho.html?pay=canceled',
         });
 
         // RETENÇÃO ESTRATÉGICA: Vincula o ID exclusivo da sessão de pagamento aos metadados do Twilio na memória.
