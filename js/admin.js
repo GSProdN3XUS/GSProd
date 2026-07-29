@@ -250,11 +250,11 @@ async function puxarHistoricoVendas() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     // Variáveis globais
     let localEstoque = [];
     let localCupons = [];
-    let imagemBase64 = "";
+    let ordemEstoqueAtual = "codigo-crescente";
 
     // Carga inicial
     carregarDadosDashboard();
@@ -327,6 +327,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     puxarProdutosParaVenda();
                     puxarHistoricoVendas();
                 }
+                // CORREÇÃO: Adicionado para garantir que a aba de cadastro também seja reexibida
+                // Nenhuma função de carregamento é necessária aqui, apenas mostrar a aba.
             }
         });
     });
@@ -508,12 +510,20 @@ document.addEventListener("DOMContentLoaded", () => {
             cb.addEventListener("change", (e) => {
                 const inputId = e.target.getAttribute("data-target-input");
                 const inputQtd = document.getElementById(inputId);
+                const tamanho = e.target.value;
+
                 if (e.target.checked) {
-                    inputQtd.disabled = false;
-                    inputQtd.required = true;
-                    inputQtd.focus();
+                    // Se for Esquerda ou Direita, a quantidade é sempre 1 e o campo fica desabilitado.
+                    if (tamanho === 'E' || tamanho === 'D') {
+                        inputQtd.value = 1;
+                        inputQtd.disabled = true;
+                    } else { // Para outros tamanhos, habilita a edição de quantidade.
+                        inputQtd.disabled = false;
+                        inputQtd.required = true;
+                        inputQtd.focus();
+                    }
                 } else {
-                    inputQtd.disabled = true;
+                    inputQtd.disabled = true; // Desabilita em todos os casos ao desmarcar.
                     inputQtd.required = false;
                     inputQtd.value = "";
                 }
@@ -530,11 +540,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 inputQtdUnica.required = true;
                 inputQtdUnica.disabled = false;
                 checkboxesTamanho.forEach((cb) => {
-                    cb.checked = false;
-                    const inputId = cb.getAttribute("data-target-input");
-                    document.getElementById(inputId).disabled = true;
-                    document.getElementById(inputId).required = false;
-                    document.getElementById(inputId).value = "";
+                    // CORREÇÃO: Não desativa mais 'E' e 'D'
+                    if (cb.value !== 'E' && cb.value !== 'D') {
+                        cb.checked = false;
+                        const inputId = cb.getAttribute("data-target-input");
+                        document.getElementById(inputId).disabled = true;
+                        document.getElementById(inputId).required = false;
+                        document.getElementById(inputId).value = "";
+                    }
                 });
             } else {
                 gradesIndividuais.classList.remove("is-hidden");
@@ -546,28 +559,55 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    const inputImagem = document.getElementById("prod-imagem");
-    const nomeArquivoUpload = document.getElementById("nome-arquivo-upload");
-    const previewBox = document.getElementById("preview-box");
-    const imgPreview = document.getElementById("img-preview");
+    async function converterArquivoParaBase64(file) {
+        if (!file) {
+            return "img/logo.png";
+        }
 
-    if (inputImagem) {
-        inputImagem.addEventListener("change", (e) => {
-            const arquivoSelecionado = e.target.files[0];
-            if (arquivoSelecionado) {
-                nomeArquivoUpload.textContent = arquivoSelecionado.name;
-                const reader = new FileReader();
-                reader.onload = function (event) {
-                    imagemBase64 = event.target.result;
-                    imgPreview.src = imagemBase64;
-                    previewBox.style.display = "block";
-                };
-                reader.readAsDataURL(arquivoSelecionado);
-            } else {
-                nomeArquivoUpload.textContent = "Nenhum arquivo selecionado";
-                previewBox.style.display = "none";
-                imagemBase64 = "";
+        return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = () => reject(new Error("Não foi possível ler a imagem."));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function gerarCodigoProduto() {
+        const querySnapshot = await getDocs(collection(db, "produtos"));
+        const codigosExistentes = new Set();
+
+        querySnapshot.forEach((docSnap) => {
+            const codigo = (docSnap.data().codigo || "").toUpperCase();
+            if (codigo) {
+                codigosExistentes.add(codigo);
             }
+        });
+
+        let codigoGerado = "";
+        let tentativa = 0;
+
+        while (!codigoGerado && tentativa < 20) {
+            const numero = String(Math.floor(100 + Math.random() * 900)).padStart(3, "0");
+            const codigoTentativo = `ORTO-${numero}`;
+            if (!codigosExistentes.has(codigoTentativo)) {
+                codigoGerado = codigoTentativo;
+            }
+            tentativa += 1;
+        }
+
+        return codigoGerado || `ORTO-${String(Math.floor(100 + Math.random() * 900)).padStart(3, "0")}`;
+    }
+
+    const inputCodigoProduto = document.getElementById("prod-codigo");
+    if (inputCodigoProduto) {
+        inputCodigoProduto.value = await gerarCodigoProduto();
+    }
+
+    const selectOrdenarEstoque = document.getElementById("select-ordenar-estoque");
+    if (selectOrdenarEstoque) {
+        selectOrdenarEstoque.addEventListener("change", (e) => {
+            ordemEstoqueAtual = e.target.value;
+            renderizarTabelaEstoque();
         });
     }
 
@@ -575,7 +615,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (formCadastro) {
         formCadastro.addEventListener("submit", async (e) => {
             e.preventDefault();
-            const codigo = document.getElementById("prod-codigo").value.trim();
+            const codigoDigitado = document.getElementById("prod-codigo").value.trim();
+            const codigo = codigoDigitado || await gerarCodigoProduto();
             const nome = document.getElementById("prod-nome").value.trim();
             const valor = parseFloat(document.getElementById("prod-valor").value);
             let estoqueFinal = {};
@@ -595,42 +636,31 @@ document.addEventListener("DOMContentLoaded", () => {
                 Swal.fire({ icon: "warning", title: "Atenção!", text: "Preencha a grade." });
                 return;
             }
-            if (!imagemBase64) {
-                Swal.fire({ icon: "warning", title: "Atenção!", text: "Selecione uma imagem." });
-                return;
-            }
 
             Swal.fire({ title: "Salvando...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-            // OTIMIZAÇÃO DE IMAGEM: Enviar para o Firebase Storage
             try {
-                const storage = getStorage();
-                // Cria um nome de arquivo único usando o código do produto e a data/hora
-                const nomeArquivo = `produtos/${codigo}-${Date.now()}.jpg`;
-                const storageRef = ref(storage, nomeArquivo);
+                const imagemSelecionada = document.getElementById("prod-imagem").files[0];
+                const imagemUrlFinal = await converterArquivoParaBase64(imagemSelecionada);
 
-                // Faz o upload da imagem em formato Base64
-                const snapshot = await uploadString(storageRef, imagemBase64, 'data_url');
-
-                // Pega a URL pública da imagem após o upload
-                const urlDaImagem = await getDownloadURL(snapshot.ref);
-
-                // Agora, salva o produto no Firestore com a URL da imagem, não a imagem inteira
                 await addDoc(collection(db, "produtos"), {
                     codigo: codigo,
                     nome: nome,
                     valor: valor,
                     grade: estoqueFinal,
-                    imagemUrl: urlDaImagem, // <-- MUDANÇA CRÍTICA
+                    imagemUrl: imagemUrlFinal,
                     criadoEm: new Date(),
                 });
 
                 Swal.fire({ icon: "success", title: "Sucesso!", text: "Produto gravado com sucesso." });
                 formCadastro.reset();
-                nomeArquivoUpload.textContent = "Nenhum arquivo selecionado";
-                previewBox.style.display = "none";
-                imagemBase64 = "";
-            } catch (erro) { 
+                if (inputCodigoProduto) {
+                    inputCodigoProduto.value = await gerarCodigoProduto();
+                }
+                document.getElementById("nome-arquivo-upload").textContent = "Nenhum arquivo selecionado";
+                document.getElementById("preview-box").style.display = "none";
+            } catch (erro) {
+                console.error("Erro ao salvar produto:", erro);
                 Swal.fire({ icon: "error", title: "Erro", text: "Não foi possível salvar." });
             }
         });
@@ -660,13 +690,30 @@ document.addEventListener("DOMContentLoaded", () => {
         const corpoTabela = document.getElementById("tabela-estoque-corpo");
         if (!corpoTabela) return;
         corpoTabela.innerHTML = "";
+
+        const estoqueOrdenado = [...localEstoque].sort((a, b) => {
+            const codigoA = String(a.codigo || "").toUpperCase();
+            const codigoB = String(b.codigo || "").toUpperCase();
+            const numeroA = parseInt(codigoA.replace(/\D/g, ""), 10) || 0;
+            const numeroB = parseInt(codigoB.replace(/\D/g, ""), 10) || 0;
+
+            if (ordemEstoqueAtual === "codigo-decrescente") {
+                return numeroB - numeroA || codigoB.localeCompare(codigoA);
+            }
+
+            if (ordemEstoqueAtual === "alfabetica") {
+                return String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR");
+            }
+
+            return numeroA - numeroB || codigoA.localeCompare(codigoB);
+        });
         
-        if (localEstoque.length === 0) {
+        if (estoqueOrdenado.length === 0) {
             corpoTabela.innerHTML = `<tr><td colspan="4" class="has-text-centered has-text-grey">Nenhum produto cadastrado.</td></tr>`;
             return;
         }
         
-        localEstoque.forEach((produto) => {
+        estoqueOrdenado.forEach((produto) => {
             let HTMLGrade = "";
             for (const tamanho in produto.grade) {
                 HTMLGrade += `<span class="stock-tag"><span class="t-name">${tamanho}</span><span class="t-qty">${produto.grade[tamanho]}</span></span>`;
@@ -677,11 +724,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td>${produto.nome}</td>
                 <td>${HTMLGrade}</td>
                 <td class="has-text-centered">
-                    <!-- CORREÇÃO: Adicionado onclicks apontando explicitamente para a janela global -->
-                    <button class="button is-small is-info is-light mr-1" onclick="window.abrirModalEdicao('${produto.id}')">
+                    <!-- CORREÇÃO: Adicionado onclicks e novo botão de imagem -->
+                    <button class="button is-small is-info is-light mr-1" onclick="window.abrirModalEdicao('${produto.id}')" title="Editar estoque">
                         <i class="fas fa-pencil-alt"></i>
                     </button>
-                    <button class="button is-small is-danger is-light" onclick="window.deletarProdutoDoEstoque('${produto.id}')">
+                    <button class="button is-small is-warning is-light mr-1" onclick="window.adicionarImagemProduto('${produto.id}')" title="Adicionar ou alterar imagem">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="button is-small is-danger is-light" onclick="window.deletarProdutoDoEstoque('${produto.id}')" title="Excluir produto">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </td>
@@ -784,6 +834,42 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch (error) {
                 console.error(error);
                 Swal.fire('Erro!', 'Não foi possível atualizar as quantidades no banco de dados.', 'error');
+            }
+        }
+    };
+
+    // AÇÃO GLOBAL PARA ADICIONAR IMAGEM A UM PRODUTO EXISTENTE
+    window.adicionarImagemProduto = async (id) => {
+        const produto = localEstoque.find(p => p.id === id);
+        if (!produto) return;
+
+        const { value: file, isConfirmed } = await Swal.fire({
+            title: `Adicionar Imagem para ${produto.nome}`,
+            text: 'Selecione o arquivo de imagem para este produto.',
+            input: 'file',
+            inputAttributes: {
+                'accept': 'image/*',
+                'aria-label': 'Upload da imagem do produto'
+            },
+            confirmButtonText: 'Enviar Imagem',
+            showCancelButton: true,
+            confirmButtonColor: '#ffcc00',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (isConfirmed && file) {
+            Swal.fire({ title: "Enviando imagem...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            try {
+                const imagemBase64Result = await converterArquivoParaBase64(file);
+                const produtoRef = doc(db, "produtos", id);
+                await updateDoc(produtoRef, { imagemUrl: imagemBase64Result });
+
+                Swal.fire('Sucesso!', 'A imagem foi adicionada ao produto.', 'success');
+                puxarEstoqueDoFirebase(); // Recarrega a tabela
+            } catch (error) {
+                console.error("Erro ao enviar imagem:", error);
+                Swal.fire('Erro!', 'Não foi possível enviar a imagem.', 'error');
             }
         }
     };

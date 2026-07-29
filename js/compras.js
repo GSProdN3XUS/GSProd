@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderizarProduto(produto) {
-        document.getElementById("produto-imagem").src = produto.imagemUrl || 'img/placeholder.png';
+        document.getElementById("produto-imagem").src = produto.imagemUrl || 'img/logo.png';
         document.getElementById("produto-nome").textContent = produto.nome;
         document.getElementById("produto-preco").textContent = produto.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 

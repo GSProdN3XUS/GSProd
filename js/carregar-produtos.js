@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       const produtoId = doc.id;
       const nomeProduto = produto.nome || "Produto sem nome";
       const precoProduto = parseFloat(produto.valor) || 0.0;
-      const imagemProduto = produto.imagemUrl || "img/placeholder.png";
+      const imagemProduto = produto.imagemUrl || "img/logo.png";
       const codigoProduto = produto.codigo || "";
       const precoFormatado = precoProduto.toLocaleString("pt-BR", {
         style: "currency",

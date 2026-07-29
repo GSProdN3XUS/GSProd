@@ -215,7 +215,7 @@
                                             <div class="field">
                                                 <label class="label text-muted">Código do Produto</label>
                                                 <div class="control has-icons-left">
-                                                    <input class="input custom-input" type="text" id="prod-codigo" placeholder="EX: ORTO-502" required />
+                                                    <input class="input custom-input" type="text" id="prod-codigo" placeholder="Será gerado automaticamente" />
                                                     <span class="icon is-small is-left"><i class="fas fa-barcode"></i></span>
                                                 </div>
                                             </div>
@@ -302,7 +302,8 @@
 
                                         <div class="column is-12">
                                             <div class="field">
-                                                <label class="label text-muted">Imagem do Produto</label>
+                                                <label class="label text-muted">Imagem do Produto (opcional)</label>
+                                                <p class="help has-text-grey-light mb-2">Se nenhuma imagem for escolhida, o sistema usará a logo padrão.</p>
                                                 <div class="file has-name is-fullwidth is-info">
                                                     <label class="file-label">
                                                         <input class="file-input" type="file" id="prod-imagem" accept="image/*" />
@@ -435,6 +436,18 @@
                                 <h3 class="title is-4 has-text-white m-0">
                                     <i class="fas fa-boxes has-text-warning mr-2"></i> Controle de Estoque Geral
                                 </h3>
+                            </div>
+                        </div>
+
+                        <div class="field is-grouped is-grouped-right mb-4">
+                            <div class="control">
+                                <div class="select is-small is-dark">
+                                    <select id="select-ordenar-estoque">
+                                        <option value="codigo-crescente">Código crescente</option>
+                                        <option value="codigo-decrescente">Código decrescente</option>
+                                        <option value="alfabetica">Ordem alfabética</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
