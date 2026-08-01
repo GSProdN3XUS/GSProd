@@ -100,6 +100,16 @@ progress.progress { background-color: #2d3748; }
 /* ==========================================================================
    Estilos da Área de Cupons e Cartões (Vouchers)
    ========================================================================== */
+.item-venda-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.item-venda-lista span {
+    display: block;
+}
+
 .card-cupom {
     background-color: #121214;
     border: 1px dashed #4a5568;

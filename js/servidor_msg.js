@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 // Carrega de forma segura as variáveis configuradas em seu arquivo oculto local .env
@@ -10,6 +11,16 @@ dotenv.config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
+
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: false,
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    },
+});
 
 // REGRA CRÍTICA DE MIDDLEWARE: O Stripe exige a leitura do body bruto (Buffer) no endpoint do Webhook 
 // para validar a assinatura criptográfica de origem. Esta condicional impede que o express.json() intercepte o payload.
@@ -62,6 +73,41 @@ app.post('/enviar-ordem-servico', async (req, res) => {
         return res.json({ sucesso: true });
     } catch (error) {
         console.error("Erro na rota legado do Twilio:", error);
+        return res.status(500).json({ sucesso: false, erro: error.message });
+    }
+});
+
+app.post('/enviar-pdf-email', async (req, res) => {
+    try {
+        const { to, nomeCliente, subject, message, pdfBase64, filename } = req.body;
+        if (!to || !pdfBase64) {
+            return res.status(400).json({ sucesso: false, erro: 'E-mail e PDF são obrigatórios.' });
+        }
+
+        const mailOptions = {
+            from: process.env.SMTP_FROM || 'geilson2018jgt@gmail.com',
+            to,
+            subject: subject || 'Compra Realizada com Sucesso',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #eee; border-radius: 8px;">
+                    <h2 style="color: #1f2937;">Compra Realizada com Sucesso</h2>
+                    <p>Olá, ${nomeCliente || 'cliente'}!</p>
+                    <p>Você acaba de realizar uma compra conosco. Estamos te enviando a nota fiscal interna para caso seja necessário realizar troca ou acionamento da garantia.</p>
+                    <p><strong>Importante:</strong> trocas e acionamento da garantia só serão realizados mediante a apresentação do cupom fiscal.</p>
+                    <p>Atenciosamente,<br />S Produtos Ortopédicos</p>
+                </div>
+            `,
+            attachments: [{
+                filename: filename || 'cupom.pdf',
+                content: Buffer.from(pdfBase64, 'base64'),
+                contentType: 'application/pdf',
+            }],
+        };
+
+        await transporter.sendMail(mailOptions);
+        return res.json({ sucesso: true });
+    } catch (error) {
+        console.error('Erro ao enviar e-mail com PDF:', error);
         return res.status(500).json({ sucesso: false, erro: error.message });
     }
 });

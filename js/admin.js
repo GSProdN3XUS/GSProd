@@ -19,16 +19,13 @@ onAuthStateChanged(auth, (user) => {
 // (Deve ficar fora do DOMContentLoaded para poder ser chamada no onclick do HTML)
 // ==========================================
 window.gerarNotaPDF = (vendaCodificada) => {
-    // Descodifica os dados da venda
     const venda = JSON.parse(decodeURIComponent(vendaCodificada));
-
     const { jsPDF } = window.jspdf;
-    
-    // 1. Configura o tamanho para a bobina de 80mm de largura por 125mm de altura (ganhou uma folguinha)
+
     const doc = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: [80, 125] 
+        format: [80, 125]
     });
 
     const empresa = "S PRODUTOS ORTOPÉDICOS";
@@ -36,106 +33,111 @@ window.gerarNotaPDF = (vendaCodificada) => {
     const cnpj = "22.541.955/0001-99";
     const dataAtual = new Date().toLocaleDateString('pt-BR');
 
-    // 2. Cria o fundo amarelo claro (#fffdeb) preenchendo toda a página
     doc.setFillColor(255, 253, 235);
     doc.rect(0, 0, 80, 125, 'F');
-
-    // 3. Define a fonte padrão estilo impressora térmica (Courier) e a cor do texto (Preto)
     doc.setFont("courier", "normal");
     doc.setTextColor(0, 0, 0);
     doc.setDrawColor(0, 0, 0);
-    
-    // Configura o estilo de linha tracejada/pontilhada
     doc.setLineDashPattern([1.2, 1.2], 0);
 
-    // --- TOPO DO CUPOM ---
-    doc.line(5, 5, 75, 5); // Linha tracejada inicial
-    
+    doc.line(5, 5, 75, 5);
     doc.setFont("courier", "bold");
     doc.setFontSize(14);
     doc.text("Cupom Fiscal", 40, 12, { align: 'center' });
-    
+
     doc.setFont("courier", "normal");
     doc.setFontSize(9);
     doc.text(empresa, 40, 17, { align: 'center' });
     doc.text(dataAtual, 40, 22, { align: 'center' });
-    
     doc.line(5, 25, 75, 25);
 
-    // --- CABEÇALHO DA TABELA ---
     doc.setFont("courier", "bold");
     doc.text("Item", 5, 31);
     doc.text("Qtd", 42, 31);
     doc.text("valor", 75, 31, { align: 'right' });
-    
     doc.line(5, 34, 75, 34);
 
-    // --- CORPO DA TABELA (PRODUTOS) ---
     doc.setFont("courier", "normal");
-    
-    const nomeProd = String(venda.produtoNome || '---');
-    const tamProd = String(venda.tamanho || '---');
-    const nomeFormatado = `${nomeProd} (${tamProd})`.substring(0, 20);
-    
-    const qtdFormatada = String(venda.quantidade || '01').padStart(2, '0');
-    const valorPago = venda.valorTotal ? Number(venda.valorTotal).toFixed(2) : '0.00';
+    const itensVenda = Array.isArray(venda.itens) && venda.itens.length > 0
+        ? venda.itens
+        : [{ nome: venda.produtoNome || 'Produto', tamanho: venda.tamanho || '---', quantidade: venda.quantidade || 1, valorTotal: venda.valorTotal || 0 }];
 
-    doc.text(nomeFormatado, 5, 40);
-    doc.text(qtdFormatada, 42, 40);
-    doc.text(`R$ ${valorPago}`, 75, 40, { align: 'right' });
-    
-    doc.line(5, 44, 75, 44);
+    let linhaY = 40;
+    itensVenda.forEach((item) => {
+        const nomeItem = `${item.nome || 'Produto'} (${item.tamanho || '---'})`.substring(0, 24);
+        const qtdFormatada = String(item.quantidade || 1).padStart(2, '0');
+        const valorItem = Number(item.valorTotal || 0).toFixed(2);
+        doc.text(nomeItem, 5, linhaY);
+        doc.text(qtdFormatada, 42, linhaY);
+        doc.text(`R$ ${valorItem}`, 75, linhaY, { align: 'right' });
+        linhaY += 6;
+    });
 
-    // --- DESCONTOS ---
-    doc.text("val.desc", 5, 50);
-    doc.text("-R$ 0,00", 75, 50, { align: 'right' });
-    
-    doc.line(5, 54, 75, 54);
+    doc.line(5, linhaY, 75, linhaY);
+    linhaY += 6;
 
-    // --- TOTAL ---
+    const subtotal = Number(venda.subtotal ?? venda.valorTotal ?? 0);
+    const desconto = Number(venda.desconto ?? 0);
+    const frete = Number(venda.frete ?? 0);
+    const total = Number(venda.total ?? (subtotal - desconto + frete));
+    const origem = String(venda.origem || 'ex-site').toLowerCase();
+    const cupomTexto = venda.cupom && venda.cupom !== 'N/A' ? String(venda.cupom) : 'N/A';
+    const freteTexto = frete > 0 ? `R$ ${frete.toFixed(2)}` : 'N/A';
+
+    doc.text("val.desc", 5, linhaY);
+    doc.text(`-R$ ${desconto.toFixed(2)}`, 75, linhaY, { align: 'right' });
+    linhaY += 6;
+
+    doc.text("frete", 5, linhaY);
+    doc.text(freteTexto, 75, linhaY, { align: 'right' });
+    linhaY += 6;
+
+    doc.text("cupom", 5, linhaY);
+    doc.text(cupomTexto, 75, linhaY, { align: 'right' });
+    linhaY += 6;
+
+    doc.line(5, linhaY, 75, linhaY);
+    linhaY += 6;
+
     doc.setFont("courier", "bold");
     doc.setFontSize(11);
-    doc.text("valor total", 5, 60);
-    doc.text(`R$ ${valorPago}`, 75, 60, { align: 'right' });
-    
-    doc.line(5, 64, 75, 64);
+    doc.text("valor total", 5, linhaY);
+    doc.text(`R$ ${total.toFixed(2)}`, 75, linhaY, { align: 'right' });
+    linhaY += 8;
 
-    // --- IDENTIFICAÇÃO E DADOS ---
     doc.setFont("courier", "normal");
     doc.setFontSize(9);
-    
+
     const idVenda = String(venda.vendaId || '---');
-    doc.text(`identificador: ${idVenda}`, 5, 70);
-    
-    // NOVO: Adiciona dados do cliente se existirem
-    let proximaLinhaY = 75;
+    doc.text(`identificador: ${idVenda}`, 5, linhaY);
+    linhaY += 6;
+
+    const textoOrigem = `origem: ${origem === 'site' ? 'site' : 'ex-site'}`;
+    doc.text(textoOrigem, 5, linhaY);
+    linhaY += 6;
+
     if (venda.clienteNome) {
         const textoCliente = `Cliente: ${venda.clienteNome}`;
         const linhasCliente = doc.splitTextToSize(textoCliente, 70);
-        doc.text(linhasCliente, 5, proximaLinhaY);
-        proximaLinhaY += (linhasCliente.length * 4.5);
+        doc.text(linhasCliente, 5, linhaY);
+        linhaY += (linhasCliente.length * 4.5);
     }
-    
-    // Altera a legenda para "representante legal" e calcula a quebra
+
     const textoRepresentante = `representante legal: ${proprietario}`;
     const linhasRepresentante = doc.splitTextToSize(textoRepresentante, 70);
-    doc.text(linhasRepresentante, 5, proximaLinhaY);
-    proximaLinhaY += (linhasRepresentante.length * 4.5);
-    
-    // Descobre dinamicamente onde o CNPJ deve ficar
-    doc.text(`CNPJ: ${cnpj}`, 5, proximaLinhaY);
-    proximaLinhaY += 6;
-    
-    // Insere a OBS
-    const textoObs = "OBS ---- troca realizada somente com apresentação do cupom fiscal";
-    const linhasObs = doc.splitTextToSize(textoObs, 70); 
-    doc.text(linhasObs, 5, proximaLinhaY);
-    
-    // Ajusta a posição da última linha tracejada do encerramento
-    const linhaFinalY = proximaLinhaY + 6 + (linhasObs.length * 4.5);
-    doc.line(5, linhaFinalY, 75, linhaFinalY); 
+    doc.text(linhasRepresentante, 5, linhaY);
+    linhaY += (linhasRepresentante.length * 4.5);
 
-    // Salva o PDF com o estilo de cupom limpo
+    doc.text(`CNPJ: ${cnpj}`, 5, linhaY);
+    linhaY += 6;
+
+    const textoObs = "OBS ---- troca realizada somente com apresentação do cupom fiscal";
+    const linhasObs = doc.splitTextToSize(textoObs, 70);
+    doc.text(linhasObs, 5, linhaY);
+
+    const linhaFinalY = linhaY + 6 + (linhasObs.length * 4.5);
+    doc.line(5, linhaFinalY, 75, linhaFinalY);
+
     doc.save(`Cupom_Venda_${idVenda}.pdf`);
 };
 
@@ -170,26 +172,32 @@ window.deletarVenda = async (vendaId) => {
             }
 
             const vendaData = vendaSnap.data();
-            const { produtoId, tamanho, quantidade } = vendaData;
+            const itensParaRestaurar = Array.isArray(vendaData.itens) && vendaData.itens.length > 0
+                ? vendaData.itens
+                : [{ produtoId: vendaData.produtoId, tamanho: vendaData.tamanho, quantidade: vendaData.quantidade }];
 
-            // 1. Estornar o estoque
-            const produtoRef = doc(db, "produtos", produtoId);
-            const produtoSnap = await getDoc(produtoRef);
+            for (const item of itensParaRestaurar) {
+                const produtoId = item.produtoId || vendaData.produtoId;
+                const tamanho = item.tamanho || vendaData.tamanho;
+                const quantidade = parseInt(item.quantidade || 0, 10);
+                if (!produtoId || !tamanho || quantidade <= 0) continue;
 
-            // VERIFICAÇÃO: Só estorna se o produto ainda existir no banco de dados
-            if (produtoSnap.exists()) {
-                const produtoData = produtoSnap.data();
-                const novaGrade = { ...produtoData.grade };
-                novaGrade[tamanho] = (novaGrade[tamanho] || 0) + quantidade;
-                await updateDoc(produtoRef, { grade: novaGrade });
-            } else {
-                console.warn(`Produto com ID ${produtoId} não encontrado. O estoque não foi estornado, mas a venda será deletada.`);
+                const produtoRef = doc(db, "produtos", produtoId);
+                const produtoSnap = await getDoc(produtoRef);
+                if (produtoSnap.exists()) {
+                    const produtoData = produtoSnap.data();
+                    const novaGrade = { ...(produtoData.grade || {}) };
+                    novaGrade[tamanho] = (novaGrade[tamanho] || 0) + quantidade;
+                    await updateDoc(produtoRef, { grade: novaGrade });
+                } else {
+                    console.warn(`Produto com ID ${produtoId} não encontrado. O estoque não foi estornado, mas a venda será deletada.`);
+                }
             }
-            // 2. Deletar o registro da venda
+
             await deleteDoc(vendaRef);
 
             Swal.fire('Sucesso!', 'A venda foi excluída e o estoque atualizado.', 'success');
-            puxarHistoricoVendas(); // Atualiza a tabela na tela
+            puxarHistoricoVendas();
         } catch (error) {
             console.error("Erro ao deletar venda:", error);
             Swal.fire('Erro!', 'Não foi possível completar a exclusão. Verifique o console para mais detalhes.', 'error');
@@ -223,18 +231,25 @@ async function puxarHistoricoVendas() {
 
         listaVendas.forEach((venda) => {
             const linha = document.createElement("tr");
-            
-            // CORREÇÃO: Codifica a venda inteira para mandar pro botão do PDF
             const vendaJSON = encodeURIComponent(JSON.stringify(venda));
+            const itensVenda = Array.isArray(venda.itens) && venda.itens.length > 0
+                ? venda.itens
+                : [{ nome: venda.produtoNome || 'Produto', tamanho: venda.tamanho || '---', quantidade: venda.quantidade || 1 }];
+
+            const resumoItens = itensVenda.map((item) => `<span>${item.nome || 'Produto'}${item.tamanho ? ` (${item.tamanho})` : ''} · Qtd: ${item.quantidade || 1}</span>`).join('');
+            const quantidadeTotal = itensVenda.reduce((total, item) => total + (parseInt(item.quantidade, 10) || 0), 0);
+            const origem = String(venda.origem || 'ex-site').toLowerCase();
+            const tagStatus = origem === 'site'
+                ? '<span class="tag is-info" style="background:#2563eb;color:white;">site</span>'
+                : '<span class="tag is-link" style="background:#8b5cf6;color:white;">ex-site</span>';
 
             linha.innerHTML = `
                 <td><span class="has-text-weight-bold has-text-info">${venda.vendaId || '------'}</span></td>
-                <td>${venda.produtoNome} <small class="has-text-grey">(${venda.codigo || 'S/C'})</small></td>
-                <td><span class="tag is-dark">${venda.tamanho}</span></td>
-                <td>${venda.quantidade}</td>
-                <td class="has-text-success">${venda.valorTotal ? venda.valorTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : 'R$ 0,00'}</td>
+                <td><div class="item-venda-lista">${resumoItens}</div></td>
+                <td>${tagStatus}</td>
+                <td>${quantidadeTotal}</td>
+                <td class="has-text-success">${(venda.valorTotal || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
                 <td class="has-text-centered">
-                    <!-- Botão de gerar nota modificado -->
                     <button class="button is-small is-warning is-light" onclick="gerarNotaPDF('${vendaJSON}')">
                         <i class="fas fa-file-invoice mr-1"></i> Nota
                     </button>
@@ -432,24 +447,34 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
 
             try {
-                // Abate do estoque
                 const novaGrade = { ...produtoSelecionadoLocal.grade };
                 novaGrade[tamanhoEscolhido] -= qtdVendida;
                 const produtoRef = doc(db, "produtos", produtoSelecionadoLocal.id);
                 await updateDoc(produtoRef, { grade: novaGrade });
 
-                // Gera UID de 6 caracteres
                 const uuidVenda = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-                // Salva a venda
                 await addDoc(collection(db, "vendas"), {
                     vendaId: uuidVenda,
+                    itens: [{
+                        produtoId: produtoSelecionadoLocal.id,
+                        nome: produtoSelecionadoLocal.nome,
+                        codigo: produtoSelecionadoLocal.codigo,
+                        tamanho: tamanhoEscolhido,
+                        quantidade: qtdVendida,
+                        valorUnitario: produtoSelecionadoLocal.valor,
+                        valorTotal: valorTotalVenda
+                    }],
                     produtoId: produtoSelecionadoLocal.id,
                     produtoNome: produtoSelecionadoLocal.nome,
                     codigo: produtoSelecionadoLocal.codigo,
                     tamanho: tamanhoEscolhido,
                     quantidade: qtdVendida,
                     valorTotal: valorTotalVenda,
+                    subtotal: valorTotalVenda,
+                    desconto: 0,
+                    frete: 0,
+                    cupom: 'N/A',
+                    origem: 'ex-site',
                     dataVenda: new Date(),
                 });
 
@@ -485,8 +510,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             querySnapshot.forEach((docSnap) => {
                 const dados = docSnap.data();
+                const itensVenda = Array.isArray(dados.itens) && dados.itens.length > 0 ? dados.itens : [];
                 totalReceita += dados.valorTotal || 0;
-                totalVendasQtd += dados.quantidade || 0;
+                totalVendasQtd += itensVenda.length > 0
+                    ? itensVenda.reduce((soma, item) => soma + (parseInt(item.quantidade, 10) || 0), 0)
+                    : (dados.quantidade || 0);
             });
 
             cardReceitas.textContent = totalReceita.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -877,6 +905,41 @@ document.addEventListener("DOMContentLoaded", async () => {
     /* ==========================================================
        7. CUPONS
     ========================================================== */
+    const formCupom = document.getElementById("form-cupom");
+    if (formCupom) {
+        formCupom.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const codigo = document.getElementById("cupom-nome")?.value?.trim().toUpperCase();
+            const usos = parseInt(document.getElementById("cupom-usos")?.value, 10);
+            const dataLimite = document.getElementById("cupom-data")?.value;
+            const valor = parseFloat(document.getElementById("cupom-valor")?.value);
+
+            if (!codigo || !dataLimite || Number.isNaN(usos) || usos < 1 || Number.isNaN(valor) || valor < 0) {
+                Swal.fire({ icon: "warning", title: "Atenção", text: "Preencha o código, o limite de usos, a data e o valor do desconto." });
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "cupons"), {
+                    nome: codigo,
+                    usos,
+                    dataLimite,
+                    valor,
+                    ativo: true,
+                    criadoEm: new Date()
+                });
+
+                Swal.fire({ icon: "success", title: "Cupom criado", text: `O cupom ${codigo} foi salvo com sucesso.` });
+                formCupom.reset();
+                document.getElementById("modal-cupom")?.classList.remove("is-active");
+                puxarCuponsDoFirebase();
+            } catch (erro) {
+                console.error("Erro ao salvar cupom:", erro);
+                Swal.fire({ icon: "error", title: "Erro", text: "Não foi possível salvar o cupom." });
+            }
+        });
+    }
+
     async function puxarCuponsDoFirebase() {
         const container = document.getElementById("grid-cupons-container");
         if (!container) return;
@@ -910,7 +973,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <div class="card-cupom">
                     <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
                         <span class="cupom-titulo">${cupom.nome}</span>
+                        <span class="tag is-warning is-light">R$ ${Number(cupom.valor || 0).toFixed(2)}</span>
                     </div>
+                    <p class="has-text-grey-light mb-1"><strong>Usos:</strong> ${cupom.usos || 0}</p>
+                    <p class="has-text-grey-light"><strong>Validade:</strong> ${cupom.dataLimite || 'Sem data'}</p>
                 </div>
             `;
             container.appendChild(coluna);

@@ -13,7 +13,10 @@ import {
   collection,
   addDoc,
   writeBatch,
+  getDocs,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const EMAIL_SERVICE_URL = "http://localhost:3000/enviar-pdf-email";
 
 const auth = getAuth();
 
@@ -22,6 +25,7 @@ let subtotalGlobal = 0;
 let descontoAplicado = 0;
 let freteAplicado = 0;
 let cupomIdGlobal = null;
+let cuponsValidos = {};
 
 // 4. Inicialização segura aguardando o estado de login
 document.addEventListener("DOMContentLoaded", () => {
@@ -92,6 +96,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (modalPerfil) modalPerfil.style.display = "none";
     });
   }
+
+  carregarCuponsDisponiveis();
 
   // Fechar modal de dados do pedido
   const fecharModalPedido = document.getElementById("fechar-modal-pedido");
@@ -245,7 +251,23 @@ function atualizarResumoValores() {
   if (totalEl) totalEl.innerText = `R$ ${calculoTotal.toFixed(2)}`;
 }
 
-// 8. Interações de Cupom e Frete
+async function carregarCuponsDisponiveis() {
+  try {
+    const snapshot = await getDocs(collection(db, "cupons"));
+    cuponsValidos = {};
+    snapshot.forEach((docSnap) => {
+      const cupom = docSnap.data();
+      cuponsValidos[String(cupom.nome || "").toUpperCase()] = {
+        id: docSnap.id,
+        valor: Number(cupom.valor || 0),
+        nome: String(cupom.nome || "").toUpperCase(),
+      };
+    });
+  } catch (error) {
+    console.error("Erro ao carregar cupons do Firebase:", error);
+  }
+}
+
 window.aplicarCupom = function () {
   const inputCupom = document
     .getElementById("input-cupom")
@@ -259,21 +281,19 @@ window.aplicarCupom = function () {
     return;
   }
 
-  const cuponsValidos = {
-    DESC10: 10.0,
-    SAUDE15: 15.0,
-    BEMVINDO5: 5.0,
-  };
+  const cupomSelecionado = cuponsValidos[inputCupom];
 
-  if (!(inputCupom in cuponsValidos)) {
+  if (!cupomSelecionado) {
     descontoAplicado = 0;
+    cupomIdGlobal = null;
     if (linhaDesconto) linhaDesconto.style.display = "none";
     Swal.fire("Cupom Inválido", "Código de cupom não reconhecido.", "error");
     atualizarResumoValores();
     return;
   }
 
-  descontoAplicado = cuponsValidos[inputCupom];
+  descontoAplicado = cupomSelecionado.valor;
+  cupomIdGlobal = cupomSelecionado.id;
   if (linhaDesconto) linhaDesconto.style.display = "flex";
   if (valorDesconto)
     valorDesconto.innerText = `-R$ ${descontoAplicado.toFixed(2)}`;
@@ -337,6 +357,76 @@ window.finalizarCompra = function () {
   }
 };
 
+function gerarBase64NotaVenda(venda) {
+  return new Promise((resolve, reject) => {
+    if (!window.jspdf?.jsPDF) {
+      reject(new Error("Biblioteca de PDF não disponível no navegador."));
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [80, 125] });
+
+    doc.setFillColor(255, 253, 235);
+    doc.rect(0, 0, 80, 125, "F");
+    doc.setFont("courier", "bold");
+    doc.setFontSize(14);
+    doc.text("Cupom Fiscal", 40, 12, { align: "center" });
+    doc.setFont("courier", "normal");
+    doc.setFontSize(9);
+    doc.text("S PRODUTOS ORTOPÉDICOS", 40, 18, { align: "center" });
+    doc.text(new Date().toLocaleDateString("pt-BR"), 40, 24, { align: "center" });
+
+    let y = 34;
+    doc.text("Itens:", 5, y);
+    y += 6;
+
+    (venda.itens || []).forEach((item) => {
+      const nomeItem = `${item.nome || "Produto"} (${item.tamanho || "---"})`;
+      doc.text(`${nomeItem} - Qtd ${item.quantidade || 1}`, 5, y);
+      y += 6;
+    });
+
+    doc.text(`Subtotal: R$ ${Number(venda.subtotal || 0).toFixed(2)}`, 5, y + 4);
+    doc.text(`Desconto: R$ ${Number(venda.desconto || 0).toFixed(2)}`, 5, y + 10);
+    doc.text(`Frete: R$ ${Number(venda.frete || 0).toFixed(2)}`, 5, y + 16);
+    doc.text(`Total: R$ ${Number(venda.total || 0).toFixed(2)}`, 5, y + 22);
+
+    const pdfDataUri = doc.output("datauristring");
+    const base64 = pdfDataUri.split(",")[1];
+    resolve(base64);
+  });
+}
+
+async function enviarPdfPorEmail(email, nomeCliente, pdfBase64, vendaId) {
+  if (!email || !pdfBase64) return;
+
+  const payload = {
+    to: email,
+    nomeCliente: nomeCliente || "Cliente",
+    subject: `Seu cupom da compra ${vendaId}`,
+    message: "Segue em anexo o PDF da sua compra.",
+    pdfBase64,
+    filename: `cupom_${vendaId}.pdf`,
+  };
+
+  try {
+    const resposta = await fetch(EMAIL_SERVICE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!resposta.ok) {
+      const errorBody = await resposta.text();
+      throw new Error(`Falha ao enviar e-mail: ${resposta.status} ${resposta.statusText} - ${errorBody}`);
+    }
+  } catch (error) {
+    console.error("Erro ao enviar PDF por e-mail:", error);
+    throw error;
+  }
+}
+
 // 10. Integração com Stripe + Memorização para disparo do Twilio pós-pagamento
 async function executarEnvioOrdemServico(nome, telefone, cpf, endereco) {
   const user = auth.currentUser;
@@ -361,45 +451,78 @@ async function executarEnvioOrdemServico(nome, telefone, cpf, endereco) {
   try {
     const carrinhoRef = doc(db, "carrinhos", user.uid);
     const carrinhoSnap = await getDoc(carrinhoRef);
+    const produtosNoCarrinho = (carrinhoSnap.exists() && Array.isArray(carrinhoSnap.data().produtos))
+      ? carrinhoSnap.data().produtos
+      : [];
 
-    if (carrinhoSnap.exists() && carrinhoSnap.data().produtos.length > 0) {
-      const produtos = carrinhoSnap.data().produtos;
+    if (produtosNoCarrinho.length > 0) {
+      const produtos = produtosNoCarrinho;
       const vendaIdUnica = Math.random()
         .toString(36)
         .substring(2, 8)
         .toUpperCase();
       const batch = writeBatch(db);
+      const itensVenda = [];
 
       for (const item of produtos) {
-        // CORREÇÃO: Garante que o ID do produto seja pego, não importa como foi salvo
         const idDoProduto = item.produtoId || item.id;
-
-        // 1. Registra a venda no histórico do admin
-        const vendaRef = doc(collection(db, "vendas"));
-        batch.set(vendaRef, {
-          vendaId: vendaIdUnica,
+        const quantidadeItem = parseInt(item.quantidade, 10) || 1;
+        const valorItem = Number(item.preco || 0) * quantidadeItem;
+        itensVenda.push({
           produtoId: idDoProduto,
-          produtoNome: item.nome,
+          nome: item.nome,
           codigo: item.codigo,
           tamanho: item.tamanho,
-          quantidade: item.quantidade,
-          valorTotal: item.preco * item.quantidade,
-          dataVenda: new Date(),
-          clienteNome: nome,
-          clienteEmail: user.email,
+          quantidade: quantidadeItem,
+          valorUnitario: Number(item.preco || 0),
+          valorTotal: valorItem,
         });
 
-        // 2. Dá baixa no estoque do produto
         const produtoRef = doc(db, "produtos", idDoProduto);
         const produtoSnap = await getDoc(produtoRef);
         if (produtoSnap.exists()) {
           const produtoData = produtoSnap.data();
           const estoqueAtual = produtoData.grade[item.tamanho] || 0;
-          const novoEstoque = Math.max(0, estoqueAtual - item.quantidade);
+          const novoEstoque = Math.max(0, estoqueAtual - quantidadeItem);
           batch.update(produtoRef, { [`grade.${item.tamanho}`]: novoEstoque });
         }
       }
+
+      const vendaRef = doc(collection(db, "vendas"));
+      const subtotal = subtotalGlobal || 0;
+      const desconto = descontoAplicado || 0;
+      const frete = freteAplicado || 0;
+      const total = Math.max(0, subtotal - desconto + frete);
+      const dadosVenda = {
+        vendaId: vendaIdUnica,
+        itens: itensVenda,
+        produtoId: itensVenda[0]?.produtoId || null,
+        produtoNome: itensVenda[0]?.nome || "Pedido",
+        codigo: itensVenda[0]?.codigo || "N/A",
+        tamanho: itensVenda[0]?.tamanho || "N/A",
+        quantidade: itensVenda.reduce((soma, item) => soma + (item.quantidade || 0), 0),
+        valorTotal: total,
+        subtotal,
+        desconto,
+        frete,
+        total,
+        cupom: cupomIdGlobal ? `cupom-${cupomIdGlobal}` : "N/A",
+        origem: "site",
+        dataVenda: new Date(),
+        clienteNome: nome,
+        clienteEmail: user.email,
+      };
+
+      batch.set(vendaRef, dadosVenda);
       await batch.commit();
+      await updateDoc(carrinhoRef, { produtos: [] });
+
+      try {
+        const pdfBase64 = await gerarBase64NotaVenda({ ...dadosVenda, total });
+        await enviarPdfPorEmail(user.email, nome, pdfBase64, vendaIdUnica);
+      } catch (emailError) {
+        console.error("Erro ao preparar ou enviar o PDF da nota:", emailError);
+      }
       console.log(
         `[CLIENT-SIDE] Venda ${vendaIdUnica} registrada e estoque atualizado.`,
       );
