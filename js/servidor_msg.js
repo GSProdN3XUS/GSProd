@@ -12,6 +12,27 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 
+function normalizarValorMonetario(valor) {
+    if (typeof valor === 'number' && Number.isFinite(valor)) return valor;
+
+    if (typeof valor === 'string') {
+        const texto = valor.trim().replace(/[^\d,.-]/g, '');
+        if (!texto) return 0;
+
+        if (texto.includes(',') && texto.includes('.')) {
+            return Number(texto.replace(/\./g, '').replace(',', '.'));
+        }
+
+        if (texto.includes(',')) {
+            return Number(texto.replace(',', '.'));
+        }
+
+        return Number(texto);
+    }
+
+    return Number(valor) || 0;
+}
+
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT || 587),
@@ -117,37 +138,63 @@ app.post('/enviar-pdf-email', async (req, res) => {
 // =================================================================
 app.post('/create-checkout-session', async (req, res) => {
     try {
-        const { numeroDonoLoja, variaveisConteudo, produtos, frete, desconto } = req.body;
+        const { numeroDonoLoja, variaveisConteudo, produtos, frete, desconto, subtotal, total } = req.body;
 
-        // Mapeamento dinâmico dos itens estruturados no Firestore para o esquema de Line Items do Stripe
-        const line_items = produtos.map(item => ({
-            price_data: {
-                currency: 'brl',
-                product_data: {
-                    name: `${item.nome} (${item.tamanho})` || 'Item do Carrinho',
+        const produtosValidos = Array.isArray(produtos) ? produtos.filter(Boolean) : [];
+        const freteRecebido = normalizarValorMonetario(frete);
+        const descontoRecebido = Math.max(0, normalizarValorMonetario(desconto));
+        const subtotalRecebido = normalizarValorMonetario(subtotal);
+        const totalRecebido = normalizarValorMonetario(total);
+
+        let line_items = [];
+
+        if (produtosValidos.length > 0) {
+            line_items = produtosValidos.map(item => {
+                const precoUnitario = normalizarValorMonetario(item.preco);
+                const quantidade = Math.max(1, parseInt(item.quantidade, 10) || 1);
+                const nomeItem = `${item.nome || 'Produto'}${item.tamanho ? ` (${item.tamanho})` : ''}`.trim() || 'Item do Carrinho';
+
+                return {
+                    price_data: {
+                        currency: 'brl',
+                        product_data: {
+                            name: nomeItem,
+                            description: `${quantidade}x ${item.tamanho || 'unidade'}`.trim(),
+                        },
+                        unit_amount: Math.max(100, Math.round(precoUnitario * 100)),
+                    },
+                    quantity: quantidade,
+                };
+            });
+        }
+
+        if (line_items.length === 0) {
+            const valorFallback = Math.max(100, Math.round((totalRecebido || subtotalRecebido || 10000) * 100));
+            line_items = [{
+                price_data: {
+                    currency: 'brl',
+                    product_data: { name: 'Pedido S Produtos Ortopédicos' },
+                    unit_amount: valorFallback,
                 },
-                unit_amount: Math.round((parseFloat(item.preco) || 0) * 100), // Conversão compulsória de Float para Centavos (inteiro)
-            },
-            quantity: parseInt(item.quantidade) || 1,
-        }));
+                quantity: 1,
+            }];
+        }
 
-        // Injeção da taxa de entrega calculada previamente no fluxo do front-end
-        if (frete && frete > 0) {
+        if (freteRecebido > 0) {
             line_items.push({
                 price_data: {
                     currency: 'brl',
                     product_data: { name: 'Taxa de Entrega (Frete)' },
-                    unit_amount: Math.round(frete * 100),
+                    unit_amount: Math.round(freteRecebido * 100),
                 },
                 quantity: 1,
             });
         }
 
-        // Geração dinâmica de Cupom de desconto no Stripe, caso haja valor elegível mitigado no carrinho
         let discounts = [];
-        if (desconto && desconto > 0) {
+        if (descontoRecebido > 0) {
             const coupon = await stripe.coupons.create({
-                amount_off: Math.round(desconto * 100),
+                amount_off: Math.round(descontoRecebido * 100),
                 currency: 'brl',
                 duration: 'once',
             });
@@ -155,13 +202,21 @@ app.post('/create-checkout-session', async (req, res) => {
         }
 
         // Instanciação da Checkout Session oficial do Stripe
+        const valorTotalCheckout = Math.max(0, (totalRecebido || subtotalRecebido || 0) - descontoRecebido + freteRecebido);
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card' ],
-             // Caso queira habilitar Pix futuramente, adicione 'pix' a este array
             line_items,
             mode: 'payment',
             discounts: discounts.length > 0 ? discounts : undefined,
-            success_url: 'http://127.0.0.1:5500/index.html?pay=success', // Certifique-se de ajustar a porta conforme o seu Live Server
+            allow_promotion_codes: true,
+            metadata: {
+                subtotal: String(subtotalRecebido || totalRecebido || 0),
+                desconto: String(descontoRecebido),
+                frete: String(freteRecebido),
+                total: String(valorTotalCheckout),
+            },
+            success_url: 'http://127.0.0.1:5500/index.html?pay=success',
             cancel_url: 'http://127.0.0.1:5500/carrinho.html?pay=canceled',
         });
 

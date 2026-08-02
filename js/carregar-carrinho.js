@@ -15,6 +15,7 @@ import {
   writeBatch,
   getDocs,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { criarCupomPDF, obterNomeCliente } from "./nota-fiscal.js";
 
 const EMAIL_SERVICE_URL = "http://localhost:3000/enviar-pdf-email";
 
@@ -25,6 +26,7 @@ let subtotalGlobal = 0;
 let descontoAplicado = 0;
 let freteAplicado = 0;
 let cupomIdGlobal = null;
+let cupomCodigoGlobal = null;
 let cuponsValidos = {};
 
 // 4. Inicialização segura aguardando o estado de login
@@ -113,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (formPedido) {
     formPedido.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const nome = document.getElementById("modal-nome").value;
+      const nome = auth.currentUser?.displayName?.trim() || auth.currentUser?.email?.split("@")[0] || "Cliente";
       const telefone = document.getElementById("modal-telefone").value;
       const cpf = document.getElementById("modal-cpf").value;
       const endereco = document.getElementById("modal-endereco").value;
@@ -157,10 +159,10 @@ async function carregarItensCarrinho(userId) {
       subtotalGlobal = 0;
 
       produtos.forEach((prod, index) => {
-        const precoUnitario = parseFloat(prod.preco) || 0.0;
-        const quantidade = parseInt(prod.quantidade) || 1;
+        const precoUnitario = Number(prod.preco) || 0;
+        const quantidade = parseInt(prod.quantidade, 10) || 1;
 
-        const subtotalItem = precoUnitario * quantidade;
+        const subtotalItem = Number(precoUnitario * quantidade) || 0;
         subtotalGlobal += subtotalItem;
 
         const divProduto = document.createElement("div");
@@ -269,14 +271,14 @@ async function carregarCuponsDisponiveis() {
 }
 
 window.aplicarCupom = function () {
-  const inputCupom = document
-    .getElementById("input-cupom")
-    .value.trim()
-    .toUpperCase();
+  const rawCupom = document.getElementById("input-cupom").value;
+  const inputCupom = rawCupom
+    .toUpperCase()
+    .replace(/\s+/g, " ");
   const linhaDesconto = document.getElementById("linha-desconto");
   const valorDesconto = document.getElementById("valor-desconto");
 
-  if (!inputCupom) {
+  if (!inputCupom.trim()) {
     Swal.fire("Atenção", "Digite um código de cupom válido.", "warning");
     return;
   }
@@ -286,6 +288,7 @@ window.aplicarCupom = function () {
   if (!cupomSelecionado) {
     descontoAplicado = 0;
     cupomIdGlobal = null;
+    cupomCodigoGlobal = null;
     if (linhaDesconto) linhaDesconto.style.display = "none";
     Swal.fire("Cupom Inválido", "Código de cupom não reconhecido.", "error");
     atualizarResumoValores();
@@ -294,6 +297,7 @@ window.aplicarCupom = function () {
 
   descontoAplicado = cupomSelecionado.valor;
   cupomIdGlobal = cupomSelecionado.id;
+  cupomCodigoGlobal = inputCupom;
   if (linhaDesconto) linhaDesconto.style.display = "flex";
   if (valorDesconto)
     valorDesconto.innerText = `-R$ ${descontoAplicado.toFixed(2)}`;
@@ -358,44 +362,7 @@ window.finalizarCompra = function () {
 };
 
 function gerarBase64NotaVenda(venda) {
-  return new Promise((resolve, reject) => {
-    if (!window.jspdf?.jsPDF) {
-      reject(new Error("Biblioteca de PDF não disponível no navegador."));
-      return;
-    }
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [80, 125] });
-
-    doc.setFillColor(255, 253, 235);
-    doc.rect(0, 0, 80, 125, "F");
-    doc.setFont("courier", "bold");
-    doc.setFontSize(14);
-    doc.text("Cupom Fiscal", 40, 12, { align: "center" });
-    doc.setFont("courier", "normal");
-    doc.setFontSize(9);
-    doc.text("S PRODUTOS ORTOPÉDICOS", 40, 18, { align: "center" });
-    doc.text(new Date().toLocaleDateString("pt-BR"), 40, 24, { align: "center" });
-
-    let y = 34;
-    doc.text("Itens:", 5, y);
-    y += 6;
-
-    (venda.itens || []).forEach((item) => {
-      const nomeItem = `${item.nome || "Produto"} (${item.tamanho || "---"})`;
-      doc.text(`${nomeItem} - Qtd ${item.quantidade || 1}`, 5, y);
-      y += 6;
-    });
-
-    doc.text(`Subtotal: R$ ${Number(venda.subtotal || 0).toFixed(2)}`, 5, y + 4);
-    doc.text(`Desconto: R$ ${Number(venda.desconto || 0).toFixed(2)}`, 5, y + 10);
-    doc.text(`Frete: R$ ${Number(venda.frete || 0).toFixed(2)}`, 5, y + 16);
-    doc.text(`Total: R$ ${Number(venda.total || 0).toFixed(2)}`, 5, y + 22);
-
-    const pdfDataUri = doc.output("datauristring");
-    const base64 = pdfDataUri.split(",")[1];
-    resolve(base64);
-  });
+  return criarCupomPDF(venda, auth.currentUser);
 }
 
 async function enviarPdfPorEmail(email, nomeCliente, pdfBase64, vendaId) {
@@ -436,6 +403,7 @@ async function executarEnvioOrdemServico(nome, telefone, cpf, endereco) {
   const desconto = parseFloat(descontoAplicado) || 0;
   const frete = parseFloat(freteAplicado) || 0;
   const totalFinal = subtotal - desconto + frete;
+  let produtosParaCheckout = [];
   const valorFinal = totalFinal < 0 ? 0 : totalFinal;
 
   Swal.fire({
@@ -457,6 +425,7 @@ async function executarEnvioOrdemServico(nome, telefone, cpf, endereco) {
 
     if (produtosNoCarrinho.length > 0) {
       const produtos = produtosNoCarrinho;
+      produtosParaCheckout = produtos.map((item) => ({ ...item }));
       const vendaIdUnica = Math.random()
         .toString(36)
         .substring(2, 8)
@@ -506,20 +475,25 @@ async function executarEnvioOrdemServico(nome, telefone, cpf, endereco) {
         desconto,
         frete,
         total,
-        cupom: cupomIdGlobal ? `cupom-${cupomIdGlobal}` : "N/A",
+        cupom: cupomCodigoGlobal || (cupomIdGlobal ? `cupom-${cupomIdGlobal}` : "N/A"),
         origem: "site",
         dataVenda: new Date(),
-        clienteNome: nome,
+        clienteNome: obterNomeCliente({}, user),
         clienteEmail: user.email,
       };
 
       batch.set(vendaRef, dadosVenda);
       await batch.commit();
-      await updateDoc(carrinhoRef, { produtos: [] });
+
+      try {
+        await updateDoc(carrinhoRef, { produtos: [] });
+      } catch (clearError) {
+        console.warn("Não foi possível limpar o carrinho após salvar a venda:", clearError);
+      }
 
       try {
         const pdfBase64 = await gerarBase64NotaVenda({ ...dadosVenda, total });
-        await enviarPdfPorEmail(user.email, nome, pdfBase64, vendaIdUnica);
+        await enviarPdfPorEmail(user.email, obterNomeCliente(dadosVenda, user), pdfBase64, vendaIdUnica);
       } catch (emailError) {
         console.error("Erro ao preparar ou enviar o PDF da nota:", emailError);
       }
@@ -548,6 +522,15 @@ async function executarEnvioOrdemServico(nome, telefone, cpf, endereco) {
       const produtos = carrinhoSnap.data().produtos || [];
       produtosArr = produtos;
       produtos.forEach((prod) => {
+        const pUnitario = parseFloat(prod.preco) || 0;
+        const qtdItem = parseInt(prod.quantidade) || 1;
+        listaMensagem += `• ${prod.nome || "Produto"} (Qtd: ${qtdItem}) - R$ ${(pUnitario * qtdItem).toFixed(2)}\n`;
+      });
+    }
+
+    if (produtosArr.length === 0) {
+      produtosArr = produtosParaCheckout || [];
+      produtosArr.forEach((prod) => {
         const pUnitario = parseFloat(prod.preco) || 0;
         const qtdItem = parseInt(prod.quantidade) || 1;
         listaMensagem += `• ${prod.nome || "Produto"} (Qtd: ${qtdItem}) - R$ ${(pUnitario * qtdItem).toFixed(2)}\n`;
@@ -591,8 +574,10 @@ TOTAL: R$ ${valorFinal.toFixed(2)}`;
           numeroDonoLoja: NUMERO_DONO_LOJA,
           variaveisConteudo: variaveisTemplate,
           produtos: produtosArr,
-          frete: frete,
+          subtotal: subtotal,
           desconto: desconto,
+          frete: frete,
+          total: valorFinal,
         }),
       },
     );

@@ -3,6 +3,7 @@ import { db } from "./fireconfig.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js";
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { criarCupomPDF } from "./nota-fiscal.js";
 
 const auth = getAuth();
 
@@ -18,127 +19,23 @@ onAuthStateChanged(auth, (user) => {
 // FUNÇÃO GLOBAL DE GERAR PDF DA NOTA
 // (Deve ficar fora do DOMContentLoaded para poder ser chamada no onclick do HTML)
 // ==========================================
-window.gerarNotaPDF = (vendaCodificada) => {
-    const venda = JSON.parse(decodeURIComponent(vendaCodificada));
-    const { jsPDF } = window.jspdf;
-
-    const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: [80, 125]
-    });
-
-    const empresa = "S PRODUTOS ORTOPÉDICOS";
-    const proprietario = "GEILSON LEITE CORDEIRO - ME";
-    const cnpj = "22.541.955/0001-99";
-    const dataAtual = new Date().toLocaleDateString('pt-BR');
-
-    doc.setFillColor(255, 253, 235);
-    doc.rect(0, 0, 80, 125, 'F');
-    doc.setFont("courier", "normal");
-    doc.setTextColor(0, 0, 0);
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineDashPattern([1.2, 1.2], 0);
-
-    doc.line(5, 5, 75, 5);
-    doc.setFont("courier", "bold");
-    doc.setFontSize(14);
-    doc.text("Cupom Fiscal", 40, 12, { align: 'center' });
-
-    doc.setFont("courier", "normal");
-    doc.setFontSize(9);
-    doc.text(empresa, 40, 17, { align: 'center' });
-    doc.text(dataAtual, 40, 22, { align: 'center' });
-    doc.line(5, 25, 75, 25);
-
-    doc.setFont("courier", "bold");
-    doc.text("Item", 5, 31);
-    doc.text("Qtd", 42, 31);
-    doc.text("valor", 75, 31, { align: 'right' });
-    doc.line(5, 34, 75, 34);
-
-    doc.setFont("courier", "normal");
-    const itensVenda = Array.isArray(venda.itens) && venda.itens.length > 0
-        ? venda.itens
-        : [{ nome: venda.produtoNome || 'Produto', tamanho: venda.tamanho || '---', quantidade: venda.quantidade || 1, valorTotal: venda.valorTotal || 0 }];
-
-    let linhaY = 40;
-    itensVenda.forEach((item) => {
-        const nomeItem = `${item.nome || 'Produto'} (${item.tamanho || '---'})`.substring(0, 24);
-        const qtdFormatada = String(item.quantidade || 1).padStart(2, '0');
-        const valorItem = Number(item.valorTotal || 0).toFixed(2);
-        doc.text(nomeItem, 5, linhaY);
-        doc.text(qtdFormatada, 42, linhaY);
-        doc.text(`R$ ${valorItem}`, 75, linhaY, { align: 'right' });
-        linhaY += 6;
-    });
-
-    doc.line(5, linhaY, 75, linhaY);
-    linhaY += 6;
-
-    const subtotal = Number(venda.subtotal ?? venda.valorTotal ?? 0);
-    const desconto = Number(venda.desconto ?? 0);
-    const frete = Number(venda.frete ?? 0);
-    const total = Number(venda.total ?? (subtotal - desconto + frete));
-    const origem = String(venda.origem || 'ex-site').toLowerCase();
-    const cupomTexto = venda.cupom && venda.cupom !== 'N/A' ? String(venda.cupom) : 'N/A';
-    const freteTexto = frete > 0 ? `R$ ${frete.toFixed(2)}` : 'N/A';
-
-    doc.text("val.desc", 5, linhaY);
-    doc.text(`-R$ ${desconto.toFixed(2)}`, 75, linhaY, { align: 'right' });
-    linhaY += 6;
-
-    doc.text("frete", 5, linhaY);
-    doc.text(freteTexto, 75, linhaY, { align: 'right' });
-    linhaY += 6;
-
-    doc.text("cupom", 5, linhaY);
-    doc.text(cupomTexto, 75, linhaY, { align: 'right' });
-    linhaY += 6;
-
-    doc.line(5, linhaY, 75, linhaY);
-    linhaY += 6;
-
-    doc.setFont("courier", "bold");
-    doc.setFontSize(11);
-    doc.text("valor total", 5, linhaY);
-    doc.text(`R$ ${total.toFixed(2)}`, 75, linhaY, { align: 'right' });
-    linhaY += 8;
-
-    doc.setFont("courier", "normal");
-    doc.setFontSize(9);
-
-    const idVenda = String(venda.vendaId || '---');
-    doc.text(`identificador: ${idVenda}`, 5, linhaY);
-    linhaY += 6;
-
-    const textoOrigem = `origem: ${origem === 'site' ? 'site' : 'ex-site'}`;
-    doc.text(textoOrigem, 5, linhaY);
-    linhaY += 6;
-
-    if (venda.clienteNome) {
-        const textoCliente = `Cliente: ${venda.clienteNome}`;
-        const linhasCliente = doc.splitTextToSize(textoCliente, 70);
-        doc.text(linhasCliente, 5, linhaY);
-        linhaY += (linhasCliente.length * 4.5);
+window.gerarNotaPDF = async (vendaCodificada) => {
+    try {
+        const venda = JSON.parse(decodeURIComponent(vendaCodificada));
+        const pdfBase64 = await criarCupomPDF(venda, auth.currentUser);
+        const blob = await fetch(`data:application/pdf;base64,${pdfBase64}`).then((res) => res.blob());
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Cupom_Venda_${venda.vendaId || "pedido"}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Erro ao gerar o cupom fiscal:", error);
+        Swal.fire({ icon: "error", title: "Erro", text: "Não foi possível gerar o cupom fiscal." });
     }
-
-    const textoRepresentante = `representante legal: ${proprietario}`;
-    const linhasRepresentante = doc.splitTextToSize(textoRepresentante, 70);
-    doc.text(linhasRepresentante, 5, linhaY);
-    linhaY += (linhasRepresentante.length * 4.5);
-
-    doc.text(`CNPJ: ${cnpj}`, 5, linhaY);
-    linhaY += 6;
-
-    const textoObs = "OBS ---- troca realizada somente com apresentação do cupom fiscal";
-    const linhasObs = doc.splitTextToSize(textoObs, 70);
-    doc.text(linhasObs, 5, linhaY);
-
-    const linhaFinalY = linhaY + 6 + (linhasObs.length * 4.5);
-    doc.line(5, linhaFinalY, 75, linhaFinalY);
-
-    doc.save(`Cupom_Venda_${idVenda}.pdf`);
 };
 
 /**
@@ -229,7 +126,20 @@ async function puxarHistoricoVendas() {
             return dataB - dataA;
         });
 
-        listaVendas.forEach((venda) => {
+        const termoBusca = (document.getElementById("busca-venda-codigo")?.value || "").trim().toLowerCase();
+        const vendasExibidas = listaVendas.filter((venda) => {
+            if (!termoBusca) return true;
+            const codigo = String(venda.vendaId || "").toLowerCase();
+            const cliente = String(venda.clienteNome || venda.clienteEmail || "").toLowerCase();
+            return codigo.includes(termoBusca) || cliente.includes(termoBusca);
+        });
+
+        if (vendasExibidas.length === 0) {
+            corpoTabelaVendas.innerHTML = `<tr><td colspan="6" class="has-text-centered has-text-grey">Nenhuma venda encontrada para o termo informado.</td></tr>`;
+            return;
+        }
+
+        vendasExibidas.forEach((venda) => {
             const linha = document.createElement("tr");
             const vendaJSON = encodeURIComponent(JSON.stringify(venda));
             const itensVenda = Array.isArray(venda.itens) && venda.itens.length > 0
@@ -359,6 +269,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Variáveis locais para controle
     let produtoSelecionadoLocal = null;
     let estoqueMaximoSelecionado = 0;
+    const inputBuscaVendas = document.getElementById("busca-venda-codigo");
+
+    if (inputBuscaVendas) {
+        inputBuscaVendas.addEventListener("input", () => {
+            puxarHistoricoVendas();
+        });
+    }
 
     async function puxarProdutosParaVenda() {
         if (!selectVendaProduto) return;
@@ -435,10 +352,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             e.preventDefault();
 
             const tamanhoEscolhido = selectVendaTamanho.value;
-            const qtdVendida = parseInt(inputVendaQtd.value);
-            const valorTotalVenda = produtoSelecionadoLocal.valor * qtdVendida;
+            const qtdVendida = parseInt(inputVendaQtd.value, 10) || 0;
+            const valorUnitario = Number(produtoSelecionadoLocal?.valor || 0);
+            const valorTotalVenda = valorUnitario * qtdVendida;
 
-            if (!produtoSelecionadoLocal || !tamanhoEscolhido || qtdVendida <= 0) return;
+            if (!produtoSelecionadoLocal || !tamanhoEscolhido || qtdVendida <= 0 || !Number.isFinite(valorUnitario)) return;
 
             Swal.fire({
                 title: "Salvando venda...",
@@ -447,8 +365,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
 
             try {
-                const novaGrade = { ...produtoSelecionadoLocal.grade };
-                novaGrade[tamanhoEscolhido] -= qtdVendida;
+                const novaGrade = { ...(produtoSelecionadoLocal.grade || {}) };
+                const estoqueAtual = Number(novaGrade[tamanhoEscolhido] || 0);
+                const novoEstoque = Math.max(0, estoqueAtual - qtdVendida);
+                novaGrade[tamanhoEscolhido] = novoEstoque;
                 const produtoRef = doc(db, "produtos", produtoSelecionadoLocal.id);
                 await updateDoc(produtoRef, { grade: novaGrade });
 
@@ -461,7 +381,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         codigo: produtoSelecionadoLocal.codigo,
                         tamanho: tamanhoEscolhido,
                         quantidade: qtdVendida,
-                        valorUnitario: produtoSelecionadoLocal.valor,
+                        valorUnitario,
                         valorTotal: valorTotalVenda
                     }],
                     produtoId: produtoSelecionadoLocal.id,
@@ -511,7 +431,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             querySnapshot.forEach((docSnap) => {
                 const dados = docSnap.data();
                 const itensVenda = Array.isArray(dados.itens) && dados.itens.length > 0 ? dados.itens : [];
-                totalReceita += dados.valorTotal || 0;
+                const totalVenda = Number(dados.valorTotal || 0);
+                totalReceita += totalVenda;
                 totalVendasQtd += itensVenda.length > 0
                     ? itensVenda.reduce((soma, item) => soma + (parseInt(item.quantidade, 10) || 0), 0)
                     : (dados.quantidade || 0);
