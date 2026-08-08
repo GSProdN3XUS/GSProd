@@ -1,5 +1,5 @@
 // 1. OTIMIZAÇÃO: Importa as configurações já existentes, evitando duplicação
-import { db } from "./fireconfig.js";
+import { db, rtdb } from "./fireconfig.js";
 import {
   getAuth,
   onAuthStateChanged,
@@ -15,6 +15,12 @@ import {
   writeBatch,
   getDocs,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import {
+  ref,
+  push,
+  set,
+  serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
 import { criarCupomPDF, obterNomeCliente } from "./nota-fiscal.js";
 
 const EMAIL_SERVICE_URL = "http://localhost:3000/enviar-pdf-email";
@@ -40,6 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (usuarioBtn) {
         usuarioBtn.innerHTML = `<i class="fa-regular fa-user"></i> Minha conta`;
+        let nomeExibicao = user.displayName || user.email.split('@')[0] || 'Usuário';
+        nomeExibicao = nomeExibicao.charAt(0).toUpperCase() + nomeExibicao.slice(1);
+        usuarioBtn.innerHTML = `<i class="fa-regular fa-user"></i> <strong>${nomeExibicao}</strong>`;
         usuarioBtn.href = "#";
         usuarioBtn.onclick = (e) => {
           e.preventDefault();
@@ -115,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (formPedido) {
     formPedido.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const nome = auth.currentUser?.displayName?.trim() || auth.currentUser?.email?.split("@")[0] || "Cliente";
+      const nome = document.getElementById("modal-nome").value;
       const telefone = document.getElementById("modal-telefone").value;
       const cpf = document.getElementById("modal-cpf").value;
       const endereco = document.getElementById("modal-endereco").value;
@@ -126,6 +135,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
       await executarEnvioOrdemServico(nome, telefone, cpf, endereco);
     });
+
+    // NOVO: Botão de teste para o Realtime Database
+    const btnTeste = document.createElement("button");
+    btnTeste.type = "button";
+    btnTeste.textContent = "Testar Notificação (RTDB)";
+    btnTeste.className = "button is-info is-fullwidth";
+    btnTeste.style.marginTop = "12px";
+
+    btnTeste.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await enviarTesteParaRealtimeDB();
+    });
+
+    // Adiciona o botão de teste ao formulário do modal
+    formPedido.appendChild(btnTeste);
   }
 });
 
@@ -340,6 +364,82 @@ window.calcularFretePorCep = function () {
   );
 };
 
+async function enviarTesteParaRealtimeDB() {
+  const user = auth.currentUser;
+  if (!user) {
+      Swal.fire("Atenção", "Você precisa estar logado para testar.", "warning");
+      return;
+  }
+
+  // Coleta os dados do modal
+  const nome = document.getElementById("modal-nome").value;
+  const telefone = document.getElementById("modal-telefone").value;
+  const cpf = document.getElementById("modal-cpf").value;
+  const endereco = document.getElementById("modal-endereco").value;
+
+  // Validação mínima para o teste
+  if (!telefone || !endereco) {
+      Swal.fire("Atenção", "Preencha pelo menos o telefone e o endereço para testar.", "warning");
+      return;
+  }
+
+  Swal.fire({
+      title: "Enviando Teste...",
+      text: "Gravando dados de teste no Realtime Database...",
+      allowOutsideClick: false,
+      didOpen: () => {
+          Swal.showLoading();
+      },
+  });
+
+  // Coleta os dados do carrinho
+  const carrinhoRef = doc(db, "carrinhos", user.uid);
+  const carrinhoSnap = await getDoc(carrinhoRef);
+  const produtos = (carrinhoSnap.exists() && carrinhoSnap.data().produtos) ? carrinhoSnap.data().produtos : [];
+
+  if (produtos.length === 0) {
+      Swal.fire("Carrinho Vazio", "Adicione produtos ao carrinho para poder testar.", "info");
+      return;
+  }
+
+  // Monta o objeto do pedido
+  const subtotal = parseFloat(subtotalGlobal) || 0;
+  const desconto = parseFloat(descontoAplicado) || 0;
+  const frete = parseFloat(freteAplicado) || 0;
+  const total = subtotal - desconto + frete;
+
+  const dadosDoPedido = {
+      clienteNome: nome,
+      clienteEmail: user.email,
+      telefone,
+      cpf,
+      endereco,
+      produtos: produtos,
+      subtotal,
+      desconto,
+      frete,
+      total,
+      status: 'pagamento_teste_cliente',
+      idSessaoStripe: `teste_${new Date().getTime()}`,
+  };
+
+  try {
+      const dbRef = ref(rtdb, 'ordens_servico');
+      const novaOrdemRef = push(dbRef);
+      await set(novaOrdemRef, { ...dadosDoPedido, criadoEm: serverTimestamp() });
+
+      document.getElementById("modal-dados-pedido")?.style.display = "none";
+      const modalPedido = document.getElementById("modal-dados-pedido");
+      if (modalPedido) {
+        modalPedido.style.display = "none";
+      }
+      Swal.fire("Teste Enviado!", "Os dados foram gravados no Realtime Database. Verifique seu outro aplicativo.", "success");
+
+  } catch (error) {
+      console.error("[RTDB-TEST] Erro ao salvar a ordem de serviço de teste:", error);
+      Swal.fire("Erro", "Não foi possível enviar os dados de teste. Verifique o console.", "error");
+  }
+}
 // 9. Ação Finalizar Compra
 window.finalizarCompra = function () {
   const user = auth.currentUser;
@@ -479,6 +579,7 @@ async function executarEnvioOrdemServico(nome, telefone, cpf, endereco) {
         origem: "site",
         dataVenda: new Date(),
         clienteNome: obterNomeCliente({}, user),
+        clienteNome: nome,
         clienteEmail: user.email,
       };
 
@@ -494,6 +595,8 @@ async function executarEnvioOrdemServico(nome, telefone, cpf, endereco) {
       try {
         const pdfBase64 = await gerarBase64NotaVenda({ ...dadosVenda, total });
         await enviarPdfPorEmail(user.email, obterNomeCliente(dadosVenda, user), pdfBase64, vendaIdUnica);
+        const pdfBase64 = await gerarBase64NotaVenda({ ...dadosVenda, total, clienteNome: nome });
+        await enviarPdfPorEmail(user.email, nome, pdfBase64, vendaIdUnica);
       } catch (emailError) {
         console.error("Erro ao preparar ou enviar o PDF da nota:", emailError);
       }
@@ -578,6 +681,11 @@ TOTAL: R$ ${valorFinal.toFixed(2)}`;
           desconto: desconto,
           frete: frete,
           total: valorFinal,
+          clienteNome: nome,
+          clienteEmail: user.email,
+          telefone,
+          cpf,
+          endereco,
         }),
       },
     );

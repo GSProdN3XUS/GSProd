@@ -3,7 +3,11 @@
 // ==========================================================================
 
 // Importações dos módulos necessários
-import { auth } from "./fireconfig.js";
+import { auth, db } from "./fireconfig.js";
+import {
+    doc,
+    setDoc,
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { 
     createUserWithEmailAndPassword,
     updateProfile, 
@@ -100,6 +104,16 @@ if (formCadastro) {
                 // NOVO: Atualiza o perfil do usuário com o nome fornecido
                 await updateProfile(userCredential.user, {
                     displayName: nome
+                });
+
+                // Salva dados adicionais em Firestore para listagem no admin
+                await setDoc(doc(db, "usuarios", userCredential.user.uid), {
+                    uid: userCredential.user.uid,
+                    nome,
+                    cpf,
+                    telefone,
+                    email,
+                    criadoEm: new Date(),
                 });
 
                 modal.style.display = "none";

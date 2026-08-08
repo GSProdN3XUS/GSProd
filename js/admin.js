@@ -2,7 +2,7 @@
 import { db } from "./fireconfig.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js";
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { criarCupomPDF } from "./nota-fiscal.js";
 
 const auth = getAuth();
@@ -175,6 +175,115 @@ async function puxarHistoricoVendas() {
     }
 }
 
+async function puxarUsuariosAdmin() {
+    const corpoTabela = document.getElementById("tabela-usuarios-corpo");
+    const buscaUsuario = document.getElementById("busca-usuario-admin");
+    if (!corpoTabela) return;
+
+    try {
+        const querySnapshot = await getDocs(collection(db, "usuarios"));
+        const usuarios = [];
+        querySnapshot.forEach((docSnap) => {
+            usuarios.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        const termoBusca = (buscaUsuario?.value || "").trim().toLowerCase();
+        const exibidos = usuarios.filter((usuario) => {
+            if (!termoBusca) return true;
+            return (
+                String(usuario.nome || "").toLowerCase().includes(termoBusca) ||
+                String(usuario.email || "").toLowerCase().includes(termoBusca)
+            );
+        });
+
+        if (exibidos.length === 0) {
+            corpoTabela.innerHTML = `<tr><td colspan="5" class="has-text-centered has-text-grey">Nenhum usuário encontrado.</td></tr>`;
+            return;
+        }
+
+        corpoTabela.innerHTML = "";
+        exibidos.forEach((usuario) => {
+            const linha = document.createElement("tr");
+            linha.innerHTML = `
+                <td>${usuario.nome || "---"}</td>
+                <td>${usuario.email || "---"}</td>
+                <td>${usuario.telefone || "---"}</td>
+                <td>${usuario.cpf || "---"}</td>
+                <td class="has-text-centered">
+                    <button class="button is-small is-danger is-light" onclick="window.excluirUsuario('${usuario.id}')">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    <button class="button is-small is-info is-light ml-1" onclick="window.enviarLinkRedefinicao('${usuario.email}')">
+                        <i class="fas fa-envelope"></i>
+                    </button>
+                </td>
+            `;
+            corpoTabela.appendChild(linha);
+        });
+    } catch (e) {
+        console.error("Erro ao carregar usuários:", e);
+        corpoTabela.innerHTML = `<tr><td colspan="5" class="has-text-centered has-text-grey">Erro ao carregar usuários.</td></tr>`;
+    }
+}
+
+window.excluirUsuario = async (uid) => {
+    if (!uid) return;
+
+    const { isConfirmed } = await Swal.fire({
+        title: 'Excluir usuário?',
+        text: 'Isso removerá a conta de autenticação e o registro do usuário.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ff3860',
+        cancelButtonColor: '#4a4a4a',
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!isConfirmed) return;
+
+    try {
+        const response = await fetch('http://localhost:3000/admin/delete-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid }),
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Erro ao excluir usuário.');
+        }
+
+        Swal.fire('Excluído', 'O usuário foi removido com sucesso.', 'success');
+        puxarUsuariosAdmin();
+    } catch (error) {
+        console.error(error);
+        Swal.fire('Erro', 'Não foi possível excluir o usuário.', 'error');
+    }
+};
+
+window.enviarLinkRedefinicao = async (email) => {
+    if (!email) return;
+
+    try {
+        const response = await fetch('http://localhost:3000/admin/send-password-reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Erro ao enviar link.');
+        }
+
+        Swal.fire('Enviado', 'O link de redefinição de senha foi enviado.', 'success');
+    } catch (error) {
+        console.error(error);
+        Swal.fire('Erro', 'Não foi possível enviar o link de redefinição.', 'error');
+    }
+};
+
 document.addEventListener("DOMContentLoaded", async () => {
     // Variáveis globais
     let localEstoque = [];
@@ -251,6 +360,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 } else if (idAbaAlvo === "aba-vendas") {
                     puxarProdutosParaVenda();
                     puxarHistoricoVendas();
+                } else if (idAbaAlvo === "aba-usuarios") {
+                    puxarUsuariosAdmin();
                 }
                 // CORREÇÃO: Adicionado para garantir que a aba de cadastro também seja reexibida
                 // Nenhuma função de carregamento é necessária aqui, apenas mostrar a aba.
@@ -274,6 +385,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (inputBuscaVendas) {
         inputBuscaVendas.addEventListener("input", () => {
             puxarHistoricoVendas();
+        });
+    }
+
+    const inputBuscaUsuarios = document.getElementById("busca-usuario-admin");
+    if (inputBuscaUsuarios) {
+        inputBuscaUsuarios.addEventListener("input", () => {
+            puxarUsuariosAdmin();
         });
     }
 

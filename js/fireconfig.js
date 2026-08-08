@@ -1,6 +1,7 @@
 // 1. Importa as funções do Firebase direto da internet
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
 import {
   getFirestore,
   initializeFirestore,
@@ -10,6 +11,7 @@ import {
 // 2. Suas credenciais oficiais
 const firebaseConfig = {
     apiKey: "AIzaSyBfSSeo-Z8KWbH7rskRA0nrGKyVUfJlnxo",
+    databaseURL: "https://sprodutosort-default-rtdb.firebaseio.com",
     authDomain: "sprodutosort.firebaseapp.com",
     projectId: "sprodutosort",
     storageBucket: "sprodutosort.firebasestorage.app",
@@ -23,6 +25,7 @@ const app = initializeApp(firebaseConfig);
 
 // 4. Cria e exporta os serviços
 export const auth = getAuth(app);
+export const rtdb = getDatabase(app);
 
 let db;
 try {
