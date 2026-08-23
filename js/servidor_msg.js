@@ -314,7 +314,8 @@ app.post('/create-checkout-session', async (req, res) => {
         const valorTotalCheckout = Math.max(0, (totalRecebido || subtotalRecebido || 0) - descontoRecebido + freteRecebido);
 
         const sessionPayload = {
-            payment_method_types: ['card'],
+            payment_method_types: ['card', 'pix'],
+            currence:'brl',
             line_items,
             mode: 'payment',
             metadata: {
