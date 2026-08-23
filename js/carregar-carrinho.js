@@ -428,7 +428,6 @@ async function enviarTesteParaRealtimeDB() {
       const novaOrdemRef = push(dbRef);
       await set(novaOrdemRef, { ...dadosDoPedido, criadoEm: serverTimestamp() });
 
-      document.getElementById("modal-dados-pedido")?.style.display = "none";
       const modalPedido = document.getElementById("modal-dados-pedido");
       if (modalPedido) {
         modalPedido.style.display = "none";
@@ -578,7 +577,6 @@ async function executarEnvioOrdemServico(nome, telefone, cpf, endereco) {
         cupom: cupomCodigoGlobal || (cupomIdGlobal ? `cupom-${cupomIdGlobal}` : "N/A"),
         origem: "site",
         dataVenda: new Date(),
-        clienteNome: obterNomeCliente({}, user),
         clienteNome: nome,
         clienteEmail: user.email,
       };
@@ -593,8 +591,6 @@ async function executarEnvioOrdemServico(nome, telefone, cpf, endereco) {
       }
 
       try {
-        const pdfBase64 = await gerarBase64NotaVenda({ ...dadosVenda, total });
-        await enviarPdfPorEmail(user.email, obterNomeCliente(dadosVenda, user), pdfBase64, vendaIdUnica);
         const pdfBase64 = await gerarBase64NotaVenda({ ...dadosVenda, total, clienteNome: nome });
         await enviarPdfPorEmail(user.email, nome, pdfBase64, vendaIdUnica);
       } catch (emailError) {

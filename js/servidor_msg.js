@@ -3,14 +3,26 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const nodemailer = require('nodemailer');
 const admin = require('firebase-admin');
+const { getDatabase, ServerValue } = require('firebase-admin/database');
 require('dotenv').config();
 
 // Carrega de forma segura as variáveis configuradas em seu arquivo oculto local .env
 dotenv.config();
 
-admin.initializeApp({
+// Configuração do Firebase Admin com suporte a chave de serviço local
+let adminConfig = {
     databaseURL: "https://sprodutosort-default-rtdb.firebaseio.com",
-});
+};
+
+try {
+    const serviceAccount = require('./firebase-key.json');
+    adminConfig.credential = admin.credential.cert(serviceAccount);
+    console.log("[FIREBASE] Arquivo firebase-key.json carregado com sucesso!");
+} catch (e) {
+    console.warn("[FIREBASE] Aviso: Arquivo firebase-key.json não encontrado na raiz do projeto. O Firebase tentará usar as credenciais padrão do sistema.");
+}
+
+admin.initializeApp(adminConfig);
 
 // Inicialização dinâmica do SDK oficial do Stripe utilizando a chave restrita do ambiente
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -315,7 +327,6 @@ app.post('/create-checkout-session', async (req, res) => {
 
         const sessionPayload = {
             payment_method_types: ['card'],
-            currence:'brl',
             line_items,
             mode: 'payment',
             metadata: {
@@ -375,12 +386,12 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
             try {
                 // NOVO: Salva a ordem de serviço no Firebase Realtime Database para notificação externa
                 try {
-                    const db = admin.database();
+                    const db = getDatabase();
                     const novaOrdemRef = db.ref('ordens_servico').push();
                     await novaOrdemRef.set({
                         ...dadosDoPedido,
                         status: 'pagamento_aprovado',
-                        criadoEm: admin.database.ServerValue.TIMESTAMP,
+                        criadoEm: ServerValue.TIMESTAMP,
                         idSessaoStripe: session.id,
                     });
                     console.log(`[RTDB] Ordem de serviço ${novaOrdemRef.key} salva no Realtime Database.`);
